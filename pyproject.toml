@@ -11,6 +11,3 @@ dependencies = [
     "python-dotenv>=1.0",
     "gunicorn>=23.0",
 ]
-
-[tool.vercel]
-entrypoint = "api/index.py:app"
