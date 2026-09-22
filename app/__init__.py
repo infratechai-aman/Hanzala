@@ -41,20 +41,24 @@ def _enforce_sqlite_foreign_keys(dbapi_connection, _connection_record):
 def create_app(config_name="development"):
     """Create and configure the Flask application."""
     app = Flask(__name__)
+    # On Vercel, default to development config unless explicitly set.
+    # Production config requires SECRET_KEY to be set in Vercel env vars.
+    if os.getenv("VERCEL") and config_name == "development" and not os.getenv("FLASK_CONFIG"):
+        config_name = "development"
     config_class = config_by_name.get(config_name, config_by_name["default"])
-    if config_class is ProductionConfig and os.getenv(
-        "SECRET_KEY", DEV_FALLBACK_SECRET
-    ) in (None, "", DEV_FALLBACK_SECRET):
+    app.config.from_object(config_class)
+
+    # After loading config, ensure SECRET_KEY is not the dev fallback in production.
+    if config_class is ProductionConfig and app.config.get("SECRET_KEY", DEV_FALLBACK_SECRET) in (None, "", DEV_FALLBACK_SECRET):
         if os.getenv("VERCEL"):
-            # Provide a fallback secret key on Vercel if not yet set in project settings
+            # Use git commit SHA as a stable-ish secret when not explicitly set.
             app.config["SECRET_KEY"] = os.getenv(
-                "VERCEL_GIT_COMMIT_SHA", "vercel-auto-session-key-fallback"
+                "VERCEL_GIT_COMMIT_SHA", os.urandom(24).hex()
             )
         else:
             raise RuntimeError(
                 "SECRET_KEY must be set in the environment for production."
             )
-    app.config.from_object(config_class)
 
     db.init_app(app)
     migrate.init_app(app, db)

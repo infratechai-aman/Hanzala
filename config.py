@@ -32,8 +32,14 @@ class Config:
     if _raw_db_url and _raw_db_url.startswith("postgres://"):
         _raw_db_url = _raw_db_url.replace("postgres://", "postgresql://", 1)
     if not _raw_db_url:
-        _default_db_dir = "/tmp" if os.getenv("VERCEL") else os.path.join(BASE_DIR, "instance")
-        _raw_db_url = "sqlite:///" + os.path.join(_default_db_dir, "app.db")
+        if os.getenv("VERCEL"):
+            # On Vercel (Linux), /tmp is the only writable directory.
+            # SQLAlchemy absolute path needs four slashes: sqlite:////tmp/app.db
+            _raw_db_url = "sqlite:////tmp/app.db"
+        else:
+            _default_db_dir = os.path.join(BASE_DIR, "instance")
+            os.makedirs(_default_db_dir, exist_ok=True)
+            _raw_db_url = "sqlite:///" + os.path.join(_default_db_dir, "app.db")
 
     SQLALCHEMY_DATABASE_URI = _raw_db_url
     SQLALCHEMY_TRACK_MODIFICATIONS = False
