@@ -1,0 +1,92 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Media Vault{% endblock %}
+
+{% block content %}
+<h1>Media Vault</h1>
+<p class="card-meta">Archival media library — admin-managed assets for the public portfolio. Only PUBLISHED items ever appear publicly. Local uploads live under <code>static/uploads/media/</code>; on ephemeral hosting that directory is wiped on redeploy — prefer external URLs for permanent assets.</p>
+
+<form method="get" action="{{ url_for('admin.vault_list') }}" class="filter-form">
+    <div class="field">
+        <label for="context">Filter by context</label>
+        <select id="context" name="context" onchange="this.form.submit()">
+            <option value="">All contexts</option>
+            {% for value in contexts %}
+            <option value="{{ value }}" {% if value == active_context %}selected{% endif %}>{{ value }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="field">
+        <label for="visibility">Filter by visibility</label>
+        <select id="visibility" name="visibility" onchange="this.form.submit()">
+            <option value="">All states</option>
+            {% for value in visibilities %}
+            <option value="{{ value }}" {% if value == active_visibility %}selected{% endif %}>{{ value }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <noscript><button type="submit">Filter</button></noscript>
+</form>
+
+<p class="ledger-actions">
+    <a class="button" href="{{ url_for('admin.vault_new') }}">+ New media</a>
+</p>
+
+{% if items %}
+<div class="table-wrap">
+<table>
+    <thead>
+        <tr><th scope="col">Preview</th><th scope="col">Title</th><th scope="col">Type</th>
+            <th scope="col">Context</th><th scope="col">Visibility</th><th scope="col">Storage</th><th scope="col">Order</th><th scope="col">Actions</th></tr>
+    </thead>
+    <tbody>
+        {% for item in items %}
+        <tr>
+            <td>
+                {% if item.media_type == 'IMAGE' and item.storage == 'LOCAL' %}
+                <img src="{{ url_for('static', filename=item.location) }}" alt="{{ item.alt_text or item.title }}" loading="lazy" width="120">
+                {% elif item.media_type == 'IMAGE' %}
+                <span class="card-meta">External image</span>
+                {% elif item.media_type == 'VIDEO' %}
+                <span class="card-meta">Video — preview on edit page</span>
+                {% elif item.media_type == 'PDF' %}
+                <span class="card-meta">PDF document</span>
+                {% else %}
+                <span class="card-meta">External URL</span>
+                {% endif %}
+            </td>
+            <td>{{ item.title }}<br><span class="card-meta">{{ item.caption or '' }}</span></td>
+            <td><span class="pill pill-draft">{{ item.media_type }}</span></td>
+            <td>{{ item.context }}</td>
+            <td><span class="pill pill-{{ item.visibility|lower }}">{{ item.visibility }}</span></td>
+            <td>{% set storage = storage_status(item.location) %}{% if storage == 'REMOTE' %}Remote{% elif storage == 'PRESENT' %}Present{% elif storage == 'NONE' %}—{% else %}<strong>Missing</strong>{% endif %}</td>
+            <td>{{ item.display_order }}</td>
+            <td class="actions">
+                <a href="{{ url_for('admin.vault_edit', media_id=item.id) }}">View / Edit</a>
+                <form method="post" action="{{ url_for('admin.vault_visibility', media_id=item.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <label class="card-meta" for="vis-{{ item.id }}">Set</label>
+                    <select id="vis-{{ item.id }}" name="visibility">
+                        {% for value in visibilities %}
+                        <option value="{{ value }}" {% if value == item.visibility %}selected{% endif %}>{{ value }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit">Apply</button>
+                </form>
+                <form method="post" action="{{ url_for('admin.vault_delete', media_id=item.id) }}" onsubmit="return confirm('Delete this media item?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="danger">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}
+<div class="ledger-empty" role="status">
+    <p class="ledger-empty-title">Vault empty</p>
+    <p>No media items match. Add the first asset — for example the self-introduction video (context INTRO).</p>
+</div>
+{% endif %}
+{% endblock %}

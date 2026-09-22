@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Context — Hanzala{% endblock %}
+{% block meta_description %}The real-world context behind Hanzala's software thinking: business observation, friction, engineering ideas.{% endblock %}
+
+{% block content %}
+<h1>Context</h1>
+<p class="statement">Real-world problems become software when the friction becomes obvious.</p>
+<p class="lede">My software ideas do not start with technology. They start with watching real work happen,
+    noticing where it grinds, and asking whether a small system could remove the friction.</p>
+
+<ol class="pipeline" aria-label="From business to software">
+    <li>Real business</li>
+    <li>Observation</li>
+    <li>Friction</li>
+    <li>Engineering idea</li>
+    <li>Software</li>
+</ol>
+
+{% if experiences %}
+<section aria-labelledby="experience-heading">
+    <h2 id="experience-heading">Where this comes from</h2>
+    <ul class="record-list">
+        {% for experience in experiences %}
+        <li>
+            <h3>{{ experience.role }} — {{ experience.organization }}</h3>
+            <p class="card-meta">
+                {% if experience.start_date %}<span>{{ experience.start_date }}{% if experience.end_date %} → {{ experience.end_date }}{% elif experience.is_current %} → now{% endif %}</span>{% endif %}
+            </p>
+            {% if experience.description %}<p>{{ experience.description }}</p>{% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+</section>
+{% else %}
+<p>No context entries published yet.</p>
+{% endif %}
+{% endblock %}

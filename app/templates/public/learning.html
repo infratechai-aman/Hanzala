@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Learning — Hanzala{% endblock %}
+{% block meta_description %}What building software forced Hanzala to learn: fundamentals underneath the abstractions.{% endblock %}
+
+{% block content %}
+<h1>Learning</h1>
+<p class="lede">I learn downward. Every layer of convenience eventually breaks or confuses me,
+    and then I go study what is underneath it — then build again with fewer illusions.</p>
+
+<ol class="pipeline" aria-label="How learning happens here">
+    <li>Build</li>
+    <li>Encounter abstraction</li>
+    <li>Ask what is underneath</li>
+    <li>Learn fundamentals</li>
+    <li>Build again</li>
+</ol>
+
+{% if items %}
+<section aria-labelledby="learning-heading">
+    <h2 id="learning-heading">Currently under study</h2>
+    <ul class="record-list index-rows">
+        {% for item in items %}
+        <li>
+            <h3>{{ item.title }}</h3>
+            <p class="card-meta">
+                {% if item.status %}<span class="chip">{{ item.status }}</span>{% endif %}
+                {% if item.category %}<span>{{ item.category }}</span>{% endif %}
+            </p>
+            {% if item.description %}<p>{{ item.description }}</p>{% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+</section>
+{% else %}
+<p>No learning entries published yet.</p>
+{% endif %}
+{% endblock %}

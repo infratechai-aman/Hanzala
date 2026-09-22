@@ -1,0 +1,61 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Action prepared — {{ contact.name if contact else 'record' }}{% endblock %}
+
+{% block content %}
+<h1>Action prepared</h1>
+<div class="ledger-empty" role="status">
+    <p class="ledger-empty-title">Message prepared — not sent</p>
+    <p>This system opened nothing and sent nothing. Use the channel link below to open the app on your device; you press send. Delivery cannot be verified from here.</p>
+</div>
+
+<dl class="detail">
+    <div><dt>Recipient</dt><dd>{{ contact.name if contact else '—' }}{% if contact and contact.company %} — {{ contact.company }}{% endif %}</dd></div>
+    <div><dt>Purpose</dt><dd>{{ purpose_label }}</dd></div>
+    <div><dt>Channel</dt><dd>{{ channel_label }}</dd></div>
+    <div><dt>Message</dt><dd>{{ followup.message }}</dd></div>
+    {% if document %}<div><dt>Document</dt><dd>{{ document.document_number or document.title }} — {{ document.title }}</dd></div>{% endif %}
+    {% if document and doc_public_url %}<div><dt>Document link</dt><dd><a href="{{ doc_public_url }}" target="_blank" rel="noopener">{{ doc_public_url }}</a></dd></div>{% endif %}
+    {% if document and not doc_public_url %}<div><dt>Attachment</dt><dd>Private location — <a href="{{ url_for('admin.document_detail', document_id=document.id) }}">open document</a> and attach the file manually. Never share private paths publicly.</dd></div>{% endif %}
+    {% if project %}<div><dt>Project</dt><dd>{{ project.name }}</dd></div>{% endif %}
+    <div><dt>Record</dt><dd>Follow-up #{{ followup.id }} — {{ followup.purpose }} via {{ followup.channel }} (PREPARED{% if already_opened %}, OPENED{% endif %})</dd></div>
+</dl>
+
+{% if channel_link %}
+<p class="ledger-actions">
+    {% if followup.channel == 'WHATSAPP' %}
+    <a class="button" href="{{ channel_link }}" target="_blank" rel="noopener">Open WhatsApp</a>
+    {% elif followup.channel == 'SMS' %}
+    <a class="button" href="{{ channel_link }}">Open SMS</a>
+    {% elif followup.channel == 'EMAIL' %}
+    <a class="button" href="{{ channel_link }}">Open email</a>
+    {% endif %}
+</p>
+<p class="card-meta">{{ channel_hint }}{% if digits %} Recipient digits: {{ digits }}.{% endif %}</p>
+{% else %}
+<p class="card-meta">No channel link available — the contact has no {{ channel_label|lower }} address recorded.</p>
+{% endif %}
+
+<h2>Follow-up status</h2>
+{% if not already_opened %}
+<form method="post" action="{{ url_for('admin.action_opened', followup_id=followup.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit">Record channel opened</button>
+</form>
+<p class="card-meta">Press only after you actually opened the app. This records OPENED — never SENT, since delivery cannot be verified.</p>
+{% else %}
+<p class="card-meta">Channel opening recorded (OPENED — delivery not verified).</p>
+{% endif %}
+{% if not followup.completed_at %}
+<form method="post" action="{{ url_for('admin.followup_complete', followup_id=followup.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit">Mark follow-up completed</button>
+</form>
+{% else %}
+<p class="card-meta">Completed {{ followup.completed_at.strftime('%Y-%m-%d %H:%M') }}.</p>
+{% endif %}
+<p>
+    {% if client %}<a href="{{ url_for('admin.client_detail', client_id=client.id) }}">Back to client</a>{% endif %}
+    <a href="{{ url_for('admin.crm_dashboard') }}">CRM</a>
+</p>
+{% endblock %}

@@ -1,0 +1,46 @@
+{# Document action center (shared partial).
+   Expects: document, sendable.
+   Optional: client, project, action_links (built from client.contact).
+   Used by the vault detail page, the vault list rows that need it, and
+   the client-workspace commercial records. Channel buttons open the
+   message composer — nothing here sends anything or claims delivery. #}
+<div class="inline-form">
+    <p><strong>{{ document.document_number or ('#' ~ document.id) }}</strong> — {{ document.title }}
+        <span class="pill pill-{{ document.status|lower }}">{{ document.status }}</span></p>
+    <dl class="detail">
+        <div><dt>Client</dt><dd>{% if client %}<a href="{{ url_for('admin.client_detail', client_id=client.id) }}">{{ client.contact.name }}</a>{% if client.company %} — {{ client.company }}{% endif %}{% else %}No client linked{% endif %}</dd></div>
+        <div><dt>Project</dt><dd>{% if project %}{{ project.name }} ({{ project.status }}){% else %}—{% endif %}</dd></div>
+        <div><dt>Document</dt><dd>{{ document.title }}</dd></div>
+        <div><dt>Status</dt><dd><span class="pill pill-{{ document.status|lower }}">{{ document.status }}</span></dd></div>
+    </dl>
+    {% if document.status == 'DRAFT' %}
+    <p class="card-meta">Draft — edit before sending. Only READY documents can be prepared for sharing.</p>
+    <p><a class="button" href="{{ url_for('admin.document_edit', document_id=document.id) }}">Edit</a></p>
+    {% elif document.status == 'ARCHIVED' %}
+    <p class="card-meta">Archived — view only. Archived documents can never be sent as current.</p>
+    {% elif not sendable %}
+    <p class="card-meta">Internal / admin-only document type — never offered for client delivery.</p>
+    {% elif not client %}
+    <p class="card-meta">No recipient yet — link an existing CRM client before sending.</p>
+    <p><a class="button" href="{{ url_for('admin.document_edit', document_id=document.id) }}">Link client</a></p>
+    {% else %}
+    <h3>Send via</h3>
+    <p class="ledger-actions">
+        {% if action_links and action_links.has_whatsapp %}<a class="button" href="{{ url_for('admin.action_compose', kind='client', scope_id=client.id, document_id=document.id, channel='WHATSAPP') }}">WhatsApp</a>{% endif %}
+        {% if action_links and action_links.has_email %}<a class="button" href="{{ url_for('admin.action_compose', kind='client', scope_id=client.id, document_id=document.id, channel='EMAIL') }}">Email</a>{% endif %}
+        {% if action_links and action_links.has_sms %}<a class="button" href="{{ url_for('admin.action_compose', kind='client', scope_id=client.id, document_id=document.id, channel='SMS') }}">SMS</a>{% endif %}
+        {% if action_links and action_links.tel %}<a class="button" href="{{ action_links.tel }}">Call client</a>{% endif %}
+        {% if not action_links or (not action_links.has_whatsapp and not action_links.has_email and not action_links.has_sms) %}<span class="card-meta">No communication method available for this client.</span>{% endif %}
+    </p>
+    <p class="card-meta">Opens the composer with a prepared message — you review the text, prepare it, then open the app and send it yourself. Delivery is never verified from here.</p>
+    {% if document.url_or_path and document.url_or_path.startswith('http') %}
+    <p><a class="button" href="{{ document.url_or_path }}" target="_blank" rel="noopener">Open document</a> <span class="card-meta">Public link — included in the prepared message.</span></p>
+    {% elif document.url_or_path %}
+    <p class="card-meta">Private location — open the file separately and attach it manually. A message link can never attach a local file.</p>
+    {% endif %}
+    <p>
+        <a class="button" href="{{ url_for('admin.document_edit', document_id=document.id) }}">Edit</a>
+        <a href="{{ url_for('admin.document_detail', document_id=document.id) }}">Open</a>
+    </p>
+    {% endif %}
+</div>

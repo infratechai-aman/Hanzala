@@ -1,0 +1,72 @@
+{% extends "admin/base.html" %}
+
+{% block title %}CRM{% endblock %}
+
+{% block content %}
+<h1>CRM</h1>
+<dl class="stats">
+    <div class="stat"><dt>Contacts</dt><dd>{{ stats.contacts }}</dd></div>
+    <div class="stat"><dt>Leads</dt><dd>{{ stats.leads }}</dd></div>
+    <div class="stat"><dt>Qualified</dt><dd>{{ stats.qualified }}</dd></div>
+    <div class="stat"><dt>Active</dt><dd>{{ stats.active }}</dd></div>
+    <div class="stat"><dt>Clients</dt><dd>{{ stats.clients }}</dd></div>
+    <div class="stat"><dt>Follow-ups due</dt><dd>{{ stats.followups_due }}</dd></div>
+</dl>
+
+<h2>Follow-ups due</h2>
+{% if due_followups %}
+<div class="table-wrap">
+<table>
+    <thead>
+        <tr><th scope="col">Lead</th><th scope="col">Scheduled</th><th scope="col">Note</th><th scope="col">Actions</th></tr>
+    </thead>
+    <tbody>
+        {% for followup in due_followups %}
+        <tr>
+            <td><a href="{{ url_for('admin.lead_detail', lead_id=followup.lead_id) }}">{{ followup.lead.contact.name }}</a></td>
+            <td>{{ followup.scheduled_at.strftime('%Y-%m-%d %H:%M') if followup.scheduled_at }}</td>
+            <td>{{ followup.note or '—' }}</td>
+            <td><a href="{{ url_for('admin.lead_detail', lead_id=followup.lead_id) }}">Client actions</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}
+<p>No follow-ups due.</p>
+{% endif %}
+
+<h2>Recent leads</h2>
+{% if recent_leads %}
+<div class="table-wrap">
+<table>
+    <thead>
+        <tr><th scope="col">Name</th><th scope="col">Status</th><th scope="col">Created</th><th scope="col">Actions</th></tr>
+    </thead>
+    <tbody>
+        {% for lead in recent_leads %}
+        <tr>
+            <td><a href="{{ url_for('admin.lead_detail', lead_id=lead.id) }}">{{ lead.contact.name }}</a></td>
+            <td><span class="pill pill-{{ lead.status|lower }}">{{ lead.status }}</span></td>
+            <td>{{ lead.created_at.strftime('%Y-%m-%d') }}</td>
+            <td><a href="{{ url_for('admin.lead_detail', lead_id=lead.id) }}">Client actions</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}
+<p>No leads yet.</p>
+{% endif %}
+
+<h2>Clients</h2>
+{% if clients %}
+<ul>
+    {% for client in clients %}
+    <li><a href="{{ url_for('admin.client_detail', client_id=client.id) }}">{{ client.contact.name }}</a>{% if client.company %} — {{ client.company }}{% endif %}</li>
+    {% endfor %}
+</ul>
+{% else %}
+<p>No clients yet.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,614 @@
+{% extends "base.html" %}
+
+{% block title %}Hanzala — CS Student, Builder, Experimenter{% endblock %}
+{% block meta_description %}Hanzala: CS student building software to understand it. Work, proof, R&amp;D experiments,
+process, and learning notes.{% endblock %}
+
+{% block content %}
+<section class="hero-grid" aria-labelledby="hero-heading">
+    <div class="hero-main">
+        <p class="card-meta"><span>[001]</span><span>Personal portfolio</span></p>
+
+        <ul class="hero-concepts" aria-label="Working material">
+            <li>Software</li>
+            <li>Systems</li>
+            <li>Ideas</li>
+            <li>Experiments</li>
+            <li>Real-world</li>
+            <li>Problems</li>
+        </ul>
+
+        <p class="kicker">CS student &middot; builder &middot; experimenter</p>
+
+        <h1 id="hero-heading" class="display">Hanzala</h1>
+
+        <p class="hero-statement">I build software to understand it.</p>
+
+        <p>
+            I build websites, database-backed business systems, operational tools,
+            and experimental software — each one a step toward understanding how
+            systems work in the real world. A student and builder doing real-world
+            technical work, not a senior engineer.
+        </p>
+
+        <p class="hero-actions">
+            <a class="button" href="{{ url_for('public.work') }}">&rarr; View work</a>
+            <a class="button button-ghost" href="{{ url_for('public.rnd') }}">&rarr; R&amp;D lab</a>
+            <a class="button button-ghost" href="{{ url_for('public.contact') }}">&rarr; Work with me</a>
+        </p>
+
+        <ul class="social-row" aria-label="Contact channels">
+            <li>
+                <a href="https://github.com/Hanzalaq/" target="_blank" rel="noopener noreferrer">
+                    GitHub
+                </a>
+            </li>
+            <li>
+                <a href="https://www.instagram.com/hsq.dev/" target="_blank" rel="noopener noreferrer">
+                    Instagram
+                </a>
+            </li>
+            <li>
+                <a href="mailto:hsqfreelances@gmail.com">
+                    Email
+                </a>
+            </li>
+            <li>
+                <a href="https://wa.me/917798727978" target="_blank" rel="noopener noreferrer">
+                    WhatsApp
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="hero-collage" aria-label="Portrait collage">
+        <figure class="portrait-frame">
+            <img src="{{ url_for('static', filename='images/hanzala-portrait.png') }}" alt="Portrait of Hanzala"
+                width="620" height="840" fetchpriority="high">
+            <span class="portrait-tag portrait-tag-a">CS</span>
+            <span class="portrait-tag portrait-tag-b">Builder</span>
+            <span class="portrait-tag portrait-tag-c">Experimenter</span>
+        </figure>
+
+        <p class="collage-note">
+            Same curiosity.<br>
+            Different systems.
+        </p>
+    </div>
+
+    <aside class="hero-side" aria-label="Profile facts">
+        <dl class="fact-list">
+            <div>
+                <dt>Location</dt>
+                <dd>India (IN)</dd>
+            </div>
+            <div>
+                <dt>Age</dt>
+                <dd>20</dd>
+            </div>
+            <div>
+                <dt>Status</dt>
+                <dd>Learning / Building</dd>
+            </div>
+        </dl>
+
+        <h2 class="side-heading">Focus</h2>
+
+        <ul class="focus-list">
+            <li>Python</li>
+            <li>Web systems</li>
+            <li>Databases</li>
+            <li>AI tools</li>
+            <li>Real-world projects</li>
+        </ul>
+
+        <div class="try-panel">
+            <h2 class="side-heading">Try this</h2>
+            <p>A small game while you're here?</p>
+            <p>
+                <button type="button" class="try-play" data-game-open>
+                    Play
+                </button>
+            </p>
+            <p class="card-meta">
+                <span>Solve. Build. Repeat.</span>
+            </p>
+        </div>
+    </aside>
+</section>
+
+{% if intro_media %}
+<section aria-labelledby="intro-heading">
+    <p class="section-label">[002] Introduction</p>
+
+    <h2 id="intro-heading">{{ intro_media.title }}</h2>
+
+    {% if intro_media.caption %}
+    <p class="lede">{{ intro_media.caption }}</p>
+    {% endif %}
+
+    {% if intro_embed %}
+
+    <div class="video-frame">
+        <iframe src="{{ intro_embed }}" title="{{ intro_media.alt_text or intro_media.title }}" loading="lazy"
+            allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+    </div>
+
+    {% elif intro_media.media_type == 'VIDEO' and intro_media.storage == 'LOCAL' %}
+
+    <div class="video-frame">
+        <video controls preload="metadata" {% if intro_media.poster %} poster="{{ intro_media.poster }}" {% endif %}
+            aria-label="{{ intro_media.alt_text or intro_media.title }}">
+            <source src="{{ url_for('public.media', location=intro_media.location) }}" type="video/mp4">
+            Your browser does not support HTML5 video.
+        </video>
+    </div>
+
+    {% elif intro_media.media_type == 'VIDEO' %}
+
+    <p>
+        <a class="button" href="{{ intro_media.location }}" target="_blank" rel="noopener noreferrer">
+            Watch introduction &nearr;
+        </a>
+    </p>
+
+    {% elif intro_media.media_type == 'IMAGE' and intro_media.storage == 'LOCAL' %}
+
+    <figure class="evidence-frame">
+        <img src="{{ url_for('static', filename=intro_media.location) }}"
+            alt="{{ intro_media.alt_text or intro_media.title }}" loading="lazy">
+        {% if intro_media.caption %}
+        <figcaption>{{ intro_media.caption }}</figcaption>
+        {% endif %}
+    </figure>
+
+    {% elif intro_media.media_type == 'IMAGE' %}
+
+    <figure class="evidence-frame">
+        <img src="{{ intro_media.location }}" alt="{{ intro_media.alt_text or intro_media.title }}" loading="lazy">
+        {% if intro_media.caption %}
+        <figcaption>{{ intro_media.caption }}</figcaption>
+        {% endif %}
+    </figure>
+
+    {% else %}
+
+    <p>
+        <a class="button" href="{{ intro_media.location }}" target="_blank" rel="noopener noreferrer">
+            Open introduction &nearr;
+        </a>
+    </p>
+
+    {% endif %}
+</section>
+{% endif %}
+
+{% if learning_items %}
+<section class="explore-strip" aria-labelledby="explore-heading">
+    <h2 id="explore-heading">
+        <span class="section-label">Currently exploring</span>
+    </h2>
+
+    <ul class="explore-items">
+        {% for item in learning_items %}
+        <li>
+            <span class="explore-name">{{ item.title }}</span>
+            <span class="explore-sub">
+                {{ item.category or item.status or '' }}
+            </span>
+        </li>
+        {% endfor %}
+
+        <li class="explore-cta">
+            <span class="explore-name">Ideas &rarr; Systems</span>
+        </li>
+    </ul>
+</section>
+{% endif %}
+
+{% if selected_work %}
+<section aria-labelledby="work-heading">
+    <p class="section-label">[002] Selected work</p>
+
+    <h2 id="work-heading">Selected work</h2>
+
+    <p>
+        <a href="{{ url_for('public.work') }}">
+            View all projects &rarr;
+        </a>
+    </p>
+
+    {% for project in selected_work %}
+    <article class="feature{% if loop.index is even %} feature-reverse{% endif %}">
+        <div class="feature-main">
+            <span class="feature-number" aria-hidden="true">
+                {{ '%02d' % loop.index }}
+            </span>
+
+            <p class="card-meta">
+                <span class="chip chip-{{ project.status|lower|replace('&', '') }}">
+                    {{ project.status }}
+                </span>
+
+                {% if project.category %}
+                <span>{{ project.category.name }}</span>
+                {% endif %}
+            </p>
+
+            <h3>
+                <a href="{{ url_for('public.project_detail', slug=project.slug) }}">
+                    {{ project.title }}
+                </a>
+            </h3>
+
+            {% if project.short_description %}
+            <p>{{ project.short_description }}</p>
+            {% endif %}
+
+            {% if project.proof %}
+            <p class="card-proof">{{ project.proof }}</p>
+            {% endif %}
+
+            <p class="card-actions">
+                {% for link in project.links %}
+
+                {% if link.link_type == 'demo' %}
+                <a href="{{ link.url }}" target="_blank" rel="noopener noreferrer">
+                    Open live demo &nearr;
+                </a>
+
+                {% elif link.link_type == 'code' %}
+                <a href="{{ link.url }}" target="_blank" rel="noopener noreferrer">
+                    View source &nearr;
+                </a>
+
+                {% else %}
+                <a href="{{ link.url }}" target="_blank" rel="noopener noreferrer">
+                    {{ link.label }} &nearr;
+                </a>
+                {% endif %}
+
+                {% endfor %}
+
+                <a href="{{ url_for('public.project_detail', slug=project.slug) }}">
+                    View case study &rarr;
+                </a>
+            </p>
+        </div>
+
+        <dl class="feature-meta" aria-label="Project metadata">
+            {% if project.role %}
+            <div>
+                <dt>Role</dt>
+                <dd>{{ project.role }}</dd>
+            </div>
+            {% endif %}
+
+            {% if project.technical_details %}
+            <div>
+                <dt>Built with</dt>
+                <dd>{{ project.technical_details|truncate(140) }}</dd>
+            </div>
+            {% endif %}
+
+            {% if project.result %}
+            <div>
+                <dt>Result</dt>
+                <dd>{{ project.result|truncate(160) }}</dd>
+            </div>
+            {% endif %}
+        </dl>
+    </article>
+    {% endfor %}
+</section>
+{% endif %}
+
+{% if elsewhere_links %}
+<section class="panel-dark" aria-labelledby="proof-heading">
+    <p class="section-label">[Proof] Live systems</p>
+
+    <h2 id="proof-heading">
+        Live systems. Real links. No claims without proof.
+    </h2>
+
+    <ul class="evidence-list">
+        {% for link in elsewhere_links %}
+        <li>
+            <span class="chip">{{ link.label }}</span>
+
+            <a href="{{ link.url }}" target="_blank" rel="noopener noreferrer">
+                {{ link.project.title }} &nearr;
+            </a>
+
+            <span class="evidence-url">{{ link.url }}</span>
+        </li>
+        {% endfor %}
+    </ul>
+</section>
+{% endif %}
+
+{% if experiments %}
+<section class="board" aria-labelledby="rnd-heading">
+    <p class="section-label">
+        [003] R&amp;D / Experiments — technical index
+    </p>
+
+    <h2 id="rnd-heading">R&amp;D / Experiments</h2>
+
+    <p>
+        Active investigations — status, evidence, and open questions.
+        Not finished products.
+    </p>
+
+    {% for project in experiments %}
+    {% with file_number=loop.index %}
+    {% include "public/_project_file.html" %}
+    {% endwith %}
+    {% endfor %}
+
+    <p>
+        <a href="{{ url_for('public.rnd') }}">
+            View R&amp;D lab &rarr;
+        </a>
+    </p>
+</section>
+{% endif %}
+
+<section aria-labelledby="commercial-heading">
+    <p class="section-label">[004] Work with me</p>
+
+    <h2 id="commercial-heading">Work with me</h2>
+
+    <p class="open-flag">
+        <span class="pulse" aria-hidden="true"></span>
+        Open for projects
+    </p>
+
+    <p class="lede">
+        Custom websites and lightweight business systems for small businesses
+        that need more than a basic brochure website.
+    </p>
+
+    <ul class="tag-list" aria-label="Services">
+        <li>Websites</li>
+        <li>Business systems</li>
+        <li>Lead workflows</li>
+        <li>Listings / Inventory</li>
+        <li>Admin systems</li>
+        <li>Custom apps</li>
+    </ul>
+
+    <p class="hero-actions">
+        <a class="button" href="{{ url_for('public.contact') }}">
+            Start a project
+        </a>
+
+        <a class="button button-ghost" href="{{ url_for('public.contact') }}">
+            View details
+        </a>
+    </p>
+</section>
+
+<section aria-labelledby="context-heading">
+    <p class="section-label">[005–007] Field notes</p>
+
+    <h2 id="context-heading">Where the work comes from</h2>
+
+    <div class="cards cards-triple">
+        <article class="card">
+            <p class="section-label">[005] Process</p>
+
+            <h3>
+                Problem &rarr; Understand &rarr; Plan &rarr; Build &rarr;
+                Test &rarr; Break &rarr; Debug &rarr; Learn &rarr; Rebuild
+            </h3>
+
+            <p>
+                <a href="{{ url_for('public.process') }}">
+                    The workflow &rarr;
+                </a>
+            </p>
+        </article>
+
+        <article class="card">
+            <p class="section-label">[006] Context</p>
+
+            <h3>
+                Real world &rarr; Friction &rarr; Observation &rarr;
+                Engineering &rarr; Software
+            </h3>
+
+            <p>
+                <a href="{{ url_for('public.context') }}">
+                    The context &rarr;
+                </a>
+            </p>
+        </article>
+
+        <article class="card">
+            <p class="section-label">[007] Learning</p>
+
+            <h3>Under study now</h3>
+
+            {% if learning_items %}
+            <p class="card-meta">
+                {% for item in learning_items %}
+                <span>{{ item.title }}</span>
+                {% if not loop.last %}
+                <span>/</span>
+                {% endif %}
+                {% endfor %}
+            </p>
+            {% endif %}
+
+            <p>
+                <a href="{{ url_for('public.learning') }}">
+                    The learning log &rarr;
+                </a>
+            </p>
+        </article>
+    </div>
+</section>
+
+{% if experiences %}
+<section aria-labelledby="identity-heading">
+    <p class="section-label">Identity file</p>
+
+    <h2 id="identity-heading">Where the work comes from</h2>
+
+    <p class="card-meta">
+        <span>Hanzala — engineering identity</span>
+    </p>
+
+    <ul class="record-list">
+        {% for experience in experiences %}
+        <li>
+            <h3>
+                {{ experience.role }} — {{ experience.organization }}
+            </h3>
+
+            <p class="card-meta">
+                {% if experience.is_current %}
+                <span class="chip">Current</span>
+                {% endif %}
+            </p>
+
+            {% if experience.description %}
+            <p>{{ experience.description|truncate(320) }}</p>
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+
+    <p>
+        <a href="{{ url_for('public.context') }}">
+            Full context &rarr;
+        </a>
+    </p>
+</section>
+{% endif %}
+
+<section class="cta-panel" aria-labelledby="cta-heading">
+    <p class="section-label">Start a project</p>
+
+    <h2 id="cta-heading">Need something small built?</h2>
+
+    <p>
+        Custom websites and lightweight business systems for small businesses.
+        Tell me what it should do, what problem it solves, and what a successful
+        result looks like.
+    </p>
+
+    <p>
+        <a class="button" href="{{ url_for('public.contact') }}">
+            Start a project enquiry
+        </a>
+    </p>
+</section>
+
+<div class="game-modal" data-game hidden>
+    <div class="game-window" role="dialog" aria-modal="true" aria-labelledby="game-title">
+        <div class="game-bar">
+            <span id="game-title">[ HZ / Build loop ] System 01</span>
+            <span data-game-status>Status: active</span>
+
+            <button type="button" data-game-close aria-label="Close game">
+                &times;
+            </button>
+        </div>
+
+        <div class="game-start" data-game-start>
+            <svg class="bot" viewBox="0 0 64 84" role="img" aria-label="Build bot">
+                <title>Build bot</title>
+
+                <rect x="14" y="6" width="36" height="30" fill="none" stroke="currentColor" stroke-width="3" />
+
+                <rect x="22" y="17" width="20" height="8" class="bot-eye" />
+
+                <circle cx="20" cy="10" r="2.5" class="bot-light" />
+
+                <circle cx="44" cy="10" r="2.5" class="bot-light" />
+
+                <rect x="22" y="36" width="20" height="28" fill="none" stroke="currentColor" stroke-width="3" />
+
+                <rect x="28" y="44" width="8" height="8" class="bot-eye" />
+
+                <rect x="12" y="64" width="40" height="8" fill="none" stroke="currentColor" stroke-width="3" />
+
+                <rect x="28" y="72" width="8" height="6" fill="currentColor" />
+            </svg>
+
+            <p>
+                Run the build loop in order. Wrong move: system error.
+            </p>
+
+            <p>
+                <button type="button" data-game-play>
+                    Play
+                </button>
+            </p>
+        </div>
+
+        <div class="game-board" data-game-board hidden>
+            <div class="game-track">
+                <div class="game-token" data-game-token>
+                    <svg class="bot bot-token" viewBox="0 0 64 84" role="img" aria-hidden="true">
+                        <rect x="14" y="6" width="36" height="30" fill="none" stroke="currentColor" stroke-width="3" />
+
+                        <rect x="22" y="17" width="20" height="8" class="bot-eye" />
+
+                        <circle cx="20" cy="10" r="2.5" class="bot-light" />
+
+                        <circle cx="44" cy="10" r="2.5" class="bot-light" />
+
+                        <rect x="22" y="36" width="20" height="28" fill="none" stroke="currentColor" stroke-width="3" />
+
+                        <rect x="28" y="44" width="8" height="8" class="bot-eye" />
+
+                        <rect x="12" y="64" width="40" height="8" fill="none" stroke="currentColor" stroke-width="3" />
+
+                        <rect x="28" y="72" width="8" height="6" fill="currentColor" />
+                    </svg>
+                </div>
+            </div>
+
+            <ol class="game-targets" data-game-targets></ol>
+
+            <p class="game-message" data-game-message aria-live="polite"></p>
+
+            <p class="card-meta">
+                <span>
+                    Progress
+                    <span data-game-progress>0/7</span>
+                </span>
+            </p>
+        </div>
+
+        <div class="game-end" data-game-end hidden>
+            <p class="game-result">System rebuilt</p>
+
+            <p>Build loop complete [7/7]</p>
+
+            <p>You found the loop.</p>
+
+            <p class="card-meta">
+                <span>Same curiosity. Different systems.</span>
+            </p>
+
+            <p>
+                <button type="button" data-game-replay>
+                    Play again
+                </button>
+
+                <button type="button" data-game-close>
+                    Close
+                </button>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/build-loop.js') }}" defer></script>
+{% endblock %}

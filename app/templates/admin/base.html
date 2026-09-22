@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Admin{% endblock %} &mdash; Portfolio Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+    <header class="admin-header">
+        <div class="admin-header-inner">
+            <span class="admin-brand">Portfolio Admin</span>
+            {% if g.admin_user %}
+            <nav aria-label="Admin navigation">
+                <a href="{{ url_for('admin.dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('admin.project_list') }}">Projects</a>
+                <a href="{{ url_for('admin.category_list') }}">Categories</a>
+                <a href="{{ url_for('admin.crm_dashboard') }}">CRM</a>
+                <a href="{{ url_for('admin.lead_list') }}">Leads</a>
+                <a href="{{ url_for('admin.contact_list') }}">Contacts</a>
+            </nav>
+            <form class="logout-form" method="post" action="{{ url_for('admin.logout') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit">Log out ({{ g.admin_user.username }})</button>
+            </form>
+            {% endif %}
+        </div>
+    </header>
+
+    <main class="admin-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div role="alert" aria-live="polite">
+            {% for category, message in messages %}
+            <p class="flash flash-{{ category }}">{{ message }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

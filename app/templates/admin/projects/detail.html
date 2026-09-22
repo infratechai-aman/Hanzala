@@ -1,0 +1,152 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ project.title }}{% endblock %}
+
+{% block content %}
+<h1>{{ project.title }}</h1>
+<p>
+    <a class="button" href="{{ url_for('admin.project_edit', project_id=project.id) }}">Edit project</a>
+    <a href="{{ url_for('admin.project_list') }}">Back to projects</a>
+</p>
+<dl class="detail">
+    <div><dt>Slug</dt><dd>{{ project.slug }}</dd></div>
+    <div><dt>Status</dt><dd>{{ project.status }}</dd></div>
+    <div><dt>Category</dt><dd>{{ project.category.name if project.category else "None" }}</dd></div>
+</dl>
+
+<h2>Links</h2>
+{% for link in project.links %}
+<form class="inline-form" method="post" action="{{ url_for('admin.link_edit', link_id=link.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="field">
+        <label for="link-label-{{ link.id }}">Label</label>
+        <input id="link-label-{{ link.id }}" name="label" type="text" value="{{ link.label }}" required maxlength="100">
+    </div>
+    <div class="field">
+        <label for="link-url-{{ link.id }}">URL</label>
+        <input id="link-url-{{ link.id }}" name="url" type="url" value="{{ link.url }}" required maxlength="2000">
+    </div>
+    <div class="field">
+        <label for="link-type-{{ link.id }}">Type</label>
+        <input id="link-type-{{ link.id }}" name="link_type" type="text" value="{{ link.link_type or '' }}" maxlength="50">
+    </div>
+    <div class="field">
+        <label for="link-order-{{ link.id }}">Order</label>
+        <input id="link-order-{{ link.id }}" name="display_order" type="number" step="1" value="{{ link.display_order }}">
+    </div>
+    <button type="submit">Save link</button>
+</form>
+<form method="post" action="{{ url_for('admin.link_delete', link_id=link.id) }}" onsubmit="return confirm('Delete this link?');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="danger">Delete link</button>
+</form>
+{% else %}
+<p>No links yet.</p>
+{% endfor %}
+
+<h3>Add link</h3>
+<form method="post" action="{{ url_for('admin.link_create', project_id=project.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="field">
+        <label for="new-link-label">Label</label>
+        <input id="new-link-label" name="label" type="text" required maxlength="100">
+    </div>
+    <div class="field">
+        <label for="new-link-url">URL</label>
+        <input id="new-link-url" name="url" type="url" required maxlength="2000" placeholder="https://...">
+    </div>
+    <div class="field">
+        <label for="new-link-type">Type</label>
+        <input id="new-link-type" name="link_type" type="text" maxlength="50">
+    </div>
+    <div class="field">
+        <label for="new-link-order">Order</label>
+        <input id="new-link-order" name="display_order" type="number" step="1" value="0">
+    </div>
+    <button type="submit">Add link</button>
+</form>
+
+<h2>Media (upload a file, or reference a remote URL)</h2>
+{% for item in project.media %}
+{% set storage = storage_status(item.file_path) %}
+<p class="card-meta">Storage: {% if storage == 'REMOTE' %}Remote{% elif storage == 'PRESENT' %}Present{% else %}<strong>MEDIA FILE MISSING</strong>{% endif %}</p>
+<form class="inline-form" method="post" action="{{ url_for('admin.media_edit', media_id=item.id) }}" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="field">
+        <label for="media-type-{{ item.id }}">Type</label>
+        <select id="media-type-{{ item.id }}" name="media_type" required>
+            <option value="image" {% if item.normalized_type == 'image' %}selected{% endif %}>image</option>
+            <option value="video" {% if item.normalized_type == 'video' %}selected{% endif %}>video</option>
+        </select>
+    </div>
+    <div class="field">
+        <label for="media-file-{{ item.id }}">{% if storage == 'MISSING' %}Replacement file — restores this media{% else %}Replacement file (leave empty to keep current){% endif %}</label>
+        <input id="media-file-{{ item.id }}" name="file" type="file">
+    </div>
+    <div class="field">
+        <label for="media-path-{{ item.id }}">File path</label>
+        <input id="media-path-{{ item.id }}" name="file_path" type="text" value="{{ item.file_path }}" required maxlength="500">
+    </div>
+    <div class="field">
+        <label for="media-alt-{{ item.id }}">Alt text</label>
+        <input id="media-alt-{{ item.id }}" name="alt_text" type="text" value="{{ item.alt_text or '' }}" maxlength="255">
+    </div>
+    <div class="field">
+        <label for="media-caption-{{ item.id }}">Caption</label>
+        <textarea id="media-caption-{{ item.id }}" name="caption" rows="2">{{ item.caption or '' }}</textarea>
+    </div>
+    <div class="field">
+        <label for="media-order-{{ item.id }}">Order</label>
+        <input id="media-order-{{ item.id }}" name="display_order" type="number" step="1" value="{{ item.display_order }}">
+    </div>
+    <div class="field field-inline">
+        <input id="media-primary-{{ item.id }}" name="is_primary" type="checkbox" {% if item.is_primary %}checked{% endif %}>
+        <label for="media-primary-{{ item.id }}">Primary</label>
+    </div>
+    <button type="submit">Save media</button>
+</form>
+<form method="post" action="{{ url_for('admin.media_delete', media_id=item.id) }}" onsubmit="return confirm('Delete this media entry?');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="danger">Delete media</button>
+</form>
+{% else %}
+<p>No media entries yet.</p>
+{% endfor %}
+
+<h3>Add media</h3>
+<form method="post" action="{{ url_for('admin.media_create', project_id=project.id) }}" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="field">
+        <label for="new-media-type">Type</label>
+        <select id="new-media-type" name="media_type" required>
+            <option value="image" selected>image</option>
+            <option value="video">video</option>
+        </select>
+    </div>
+    <div class="field">
+        <label for="new-media-file">Upload file (optional — stored persistently, max 25 MB)</label>
+        <input id="new-media-file" name="file" type="file">
+    </div>
+    <div class="field">
+        <label for="new-media-path">File path or remote URL (used when no file is uploaded)</label>
+        <input id="new-media-path" name="file_path" type="text" required maxlength="500" placeholder="images/project/example.png">
+    </div>
+    <div class="field">
+        <label for="new-media-alt">Alt text</label>
+        <input id="new-media-alt" name="alt_text" type="text" maxlength="255">
+    </div>
+    <div class="field">
+        <label for="new-media-caption">Caption</label>
+        <textarea id="new-media-caption" name="caption" rows="2"></textarea>
+    </div>
+    <div class="field">
+        <label for="new-media-order">Order</label>
+        <input id="new-media-order" name="display_order" type="number" step="1" value="0">
+    </div>
+    <div class="field field-inline">
+        <input id="new-media-primary" name="is_primary" type="checkbox">
+        <label for="new-media-primary">Primary</label>
+    </div>
+    <button type="submit">Add media</button>
+</form>
+{% endblock %}

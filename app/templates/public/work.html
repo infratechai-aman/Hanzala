@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Work — Hanzala{% endblock %}
+{% block meta_description %}Projects built by Hanzala, grouped by category, each with full case-study notes.{% endblock %}
+
+{% block content %}
+<h1>Work</h1>
+<p class="lede">Everything here was built, then written up honestly — including what broke and what is still unknown.</p>
+
+<section aria-label="Status legend">
+    <h2>Status key</h2>
+    <ul class="legend">
+        <li><span class="chip">Completed</span> finished and documented</li>
+        <li><span class="chip">Prototype</span> working draft, not hardened</li>
+        <li><span class="chip">Beta</span> in active testing</li>
+        <li><span class="chip">R&amp;D</span> open research question</li>
+        <li><span class="chip">Planning</span> architecture and notes only</li>
+    </ul>
+</section>
+
+{% if built and built.projects %}
+<section aria-labelledby="built-heading">
+    <p class="section-label">Built</p>
+    <h2 id="built-heading">Built</h2>
+    {% if built.description %}<p>{{ built.description }}</p>{% endif %}
+    {% for project in built.projects|sort(attribute='display_order') %}
+    {% with file_number=loop.index %}{% include "public/_project_file.html" %}{% endwith %}
+    {% endfor %}
+</section>
+{% endif %}
+
+{% if rnd and rnd.projects %}
+<section aria-labelledby="rnd-heading">
+    <p class="section-label">R&amp;D</p>
+    <h2 id="rnd-heading">R&amp;D</h2>
+    <p>Unfinished by design — these are documented as experiments, not products.</p>
+    {% for project in rnd.projects|sort(attribute='display_order') %}
+    {% with file_number=loop.index %}{% include "public/_project_file.html" %}{% endwith %}
+    {% endfor %}
+</section>
+{% endif %}
+
+{% for category in others %}
+{% if category.projects %}
+<section aria-labelledby="cat-{{ category.slug }}">
+    <h2 id="cat-{{ category.slug }}">{{ category.name }}</h2>
+    {% if category.description %}<p>{{ category.description }}</p>{% endif %}
+    {% for project in category.projects|sort(attribute='display_order') %}
+    {% with file_number=loop.index %}{% include "public/_project_file.html" %}{% endwith %}
+    {% endfor %}
+</section>
+{% endif %}
+{% endfor %}
+
+{% if uncategorized %}
+<section aria-labelledby="uncategorized-heading">
+    <h2 id="uncategorized-heading">Uncategorized</h2>
+    {% for project in uncategorized %}
+    {% with file_number=loop.index %}{% include "public/_project_file.html" %}{% endwith %}
+    {% endfor %}
+</section>
+{% endif %}
+
+{% if not uncategorized and not others|selectattr('projects')|list and not (built and built.projects) and not (rnd and rnd.projects) %}
+<p>No projects published yet. New entries appear here once they are added.</p>
+{% endif %}
+{% endblock %}

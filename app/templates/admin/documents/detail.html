@@ -1,0 +1,62 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ document.title }}{% endblock %}
+
+{% block content %}
+<h1>{{ document.title }}</h1>
+<p>
+    <a href="{{ url_for('admin.document_list') }}">Back to documents</a>
+</p>
+<h2>Client actions</h2>
+{% include "admin/documents/_doc_actions.html" %}
+{% if client or project %}
+<h2>Delivery context</h2>
+<dl class="detail">
+    {% if client %}<div><dt>Client</dt><dd><a href="{{ url_for('admin.client_detail', client_id=client.id) }}">{{ client.contact.name }}</a>{% if client.company %} — {{ client.company }}{% endif %}</dd></div>{% endif %}
+    {% if project %}<div><dt>Project</dt><dd>{{ project.name }} ({{ project.status }})</dd></div>{% endif %}
+    <div><dt>Type</dt><dd>{{ document.doc_type or '—' }} {% if sendable %}(client-facing){% else %}(internal / admin-only){% endif %}</dd></div>
+    <div><dt>Number</dt><dd>{{ document.document_number or ('#' ~ document.id) }}</dd></div>
+    <div><dt>Status</dt><dd><span class="pill pill-{{ document.status|lower }}">{{ document.status }}</span></dd></div>
+    <div><dt>Created</dt><dd>{{ document.created_at.strftime('%Y-%m-%d %H:%M') }}</dd></div>
+    <div><dt>Available action</dt><dd>{% if document.status == 'READY' and client and sendable %}Send{% elif document.status == 'DRAFT' %}Review/finalize before sending{% else %}View only{% endif %}</dd></div>
+</dl>
+{% endif %}
+{% if document.status == 'DRAFT' %}
+<p class="card-meta">This document is still a draft. Review/finalize it before sending.</p>
+{% elif document.status == 'ARCHIVED' %}
+<p class="card-meta">Archived documents are view-only and can never be sent as current.</p>
+{% elif not sendable %}
+<p class="card-meta">Internal / admin-only document type — not offered for client delivery.</p>
+{% endif %}
+<dl class="detail">
+    <div><dt>Number</dt><dd>{{ document.document_number or ('#' ~ document.id) }}</dd></div>
+    <div><dt>Category</dt><dd>{{ document.category_label }}</dd></div>
+    <div><dt>Type</dt><dd>{{ document.doc_type or '—' }}</dd></div>
+    <div><dt>Status</dt><dd><span class="pill pill-{{ document.status|lower }}">{{ document.status }}</span></dd></div>
+    <div><dt>Location</dt><dd>{% if document.url_or_path %}<a href="{{ document.url_or_path }}" target="_blank" rel="noopener">{{ document.url_or_path }}</a>{% else %}—{% endif %}</dd></div>
+    <div><dt>Description</dt><dd>{{ document.description or '—' }}</dd></div>
+    <div><dt>Updated</dt><dd>{{ document.updated_at.strftime('%Y-%m-%d %H:%M') }}</dd></div>
+</dl>
+<h2>Version history</h2>
+{% if document.versions %}
+<ul>
+    {% for v in document.versions %}
+    <li>v{{ v.version_number }} — {{ v.status }} <span class="card-meta">({{ v.created_at.strftime('%Y-%m-%d %H:%M') }})</span>
+        {% for ap in v.approvals %}
+        <br>{{ ap.approval_type }}: <strong>{{ ap.status }}</strong>{% if ap.approver_name %} — {{ ap.approver_name }}{% endif %}
+        {% endfor %}
+    </li>
+    {% endfor %}
+</ul>
+<p class="card-meta">Approvals belong to the exact version shown. A new version never inherits an older approval.</p>
+{% else %}
+<p>No versions recorded.</p>
+{% endif %}
+{% if document.is_legal_template %}
+<p class="flash flash-error">Template — review before use. This is not legal advice and may not be legally sufficient.</p>
+{% endif %}
+<form method="post" action="{{ url_for('admin.document_delete', document_id=document.id) }}" onsubmit="return confirm('Delete this document?');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="danger">Delete document</button>
+</form>
+{% endblock %}

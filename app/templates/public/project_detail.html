@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}{{ project.title }} — Hanzala{% endblock %}
+{% block meta_description %}{{ project.short_description or project.title + ': case-study notes by Hanzala.' }}{% endblock %}
+
+{% block content %}
+<article class="case-study">
+    <p class="kicker">
+        FILE {{ project.slug }}{% if project.category %} / {{ project.category.name }}{% endif %}
+    </p>
+    <h1>{{ project.title }}</h1>
+    <dl class="status-banner" aria-label="Project status and proof">
+        <div><dt>Status</dt><dd><span class="chip chip-{{ project.status|lower|replace('&', '') }}">{{ project.status }}</span> <span class="banner-hint">maturity</span></dd></div>
+        {% if project.proof %}<div><dt>Proof</dt><dd>{{ project.proof }} <span class="banner-hint">evidence on record</span></dd></div>{% endif %}
+    </dl>
+    <p class="card-meta">
+        {% if project.role %}<span>Role: {{ project.role }}</span>{% endif %}
+    </p>
+
+    {% if project.links %}
+    <p class="access-row" aria-label="Project access">
+        {% for link in project.links %}
+        {% if link.link_type == 'demo' %}<a class="button" href="{{ link.url }}" target="_blank" rel="noopener noreferrer">Open live demo &nearr;</a>
+        {% elif link.link_type == 'code' %}<a class="button" href="{{ link.url }}" target="_blank" rel="noopener noreferrer">View source &nearr;</a>
+        {% else %}<a class="button" href="{{ link.url }}" target="_blank" rel="noopener noreferrer">{{ link.label }} &nearr;</a>
+        {% endif %}
+        {% endfor %}
+    </p>
+    {% endif %}
+
+    {% if project.media %}
+    <section aria-label="Visual evidence">
+        <h2>Visual evidence</h2>
+        <div class="evidence-frames">
+            {% for item in project.media %}
+            {% if item.normalized_type == 'image' and item.browser_url %}
+            <figure class="evidence-frame">
+                <img src="{{ item.browser_url }}" alt="{{ item.alt_text or project.title }}" loading="lazy" onerror="var s=document.createElement('span');s.className='card-meta evidence-missing';s.textContent='Media unavailable.';this.replaceWith(s);">
+                {% if item.caption %}<figcaption>{{ item.caption }}</figcaption>{% endif %}
+            </figure>
+            {% elif item.normalized_type == 'video' and item.browser_url %}
+            <figure class="evidence-frame">
+                <video controls preload="metadata" src="{{ item.browser_url }}">
+                    <p class="card-meta evidence-missing">Video unavailable.</p>
+                </video>
+                {% if item.caption %}<figcaption>{{ item.caption }}</figcaption>{% endif %}
+            </figure>
+            {% else %}
+            <div class="evidence-meta">
+                <span class="chip">{{ item.media_type }}</span>
+                <code>{{ item.file_path }}</code>
+                {% if item.alt_text %}<span> — {{ item.alt_text }}</span>{% endif %}
+                {% if item.caption %}<br><span class="card-meta">{{ item.caption }}</span>{% endif %}
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    {% if project.short_description or project.description %}
+    <section aria-label="What">
+        <h2>What</h2>
+        {% if project.short_description %}<p class="lede">{{ project.short_description }}</p>{% endif %}
+        {% if project.description %}<p>{{ project.description }}</p>{% endif %}
+    </section>
+    {% endif %}
+
+    {% if project.why %}
+    <section aria-label="Why"><h2>Why</h2><p>{{ project.why }}</p></section>
+    {% endif %}
+
+    {% if project.problem %}
+    <section aria-label="Problem"><h2>Problem</h2><p>{{ project.problem }}</p></section>
+    {% endif %}
+
+    {% if project.system_description %}
+    <section aria-label="System"><h2>System</h2><p>{{ project.system_description }}</p></section>
+    {% endif %}
+
+    {% if project.technical_details %}
+    <section aria-label="Technical"><h2>Technical</h2><p>{{ project.technical_details }}</p></section>
+    {% endif %}
+
+    {% if project.decisions %}
+    <section aria-label="Decisions"><h2>Decisions</h2><p>{{ project.decisions }}</p></section>
+    {% endif %}
+
+    {% if project.result %}
+    <section aria-label="Result"><h2>Result</h2><p>{{ project.result }}</p></section>
+    {% endif %}
+
+    <section aria-label="Status">
+        <h2>Status</h2>
+        <p><span class="chip">{{ project.status }}</span></p>
+    </section>
+
+    {% if project.proof or project.links %}
+    <section aria-label="Proof">
+        <h2>Proof</h2>
+        {% if project.proof %}<p>{{ project.proof }}</p>{% endif %}
+        {% if project.links %}
+        <ul class="link-list">
+            {% for link in project.links %}
+            <li><a href="{{ link.url }}" target="_blank" rel="noopener noreferrer">{{ link.label }}</a>{% if link.link_type %} <span class="card-meta">({{ link.link_type }})</span>{% endif %}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </section>
+    {% endif %}
+
+    {% if project.learning %}
+    <section aria-label="Learning"><h2>Learning</h2><p>{{ project.learning }}</p></section>
+    {% endif %}
+
+    {% if project.limitations %}
+    <section aria-label="Limitations"><h2>Limitations</h2><p>{{ project.limitations }}</p></section>
+    {% endif %}
+
+    {% if project.next_steps %}
+    <section aria-label="Next"><h2>Next</h2><p>{{ project.next_steps }}</p></section>
+    {% endif %}
+
+</article>
+{% endblock %}

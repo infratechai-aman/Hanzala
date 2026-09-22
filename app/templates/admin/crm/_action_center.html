@@ -1,0 +1,96 @@
+{# Client Action Center (shared partial).
+   Expects: contact, action_links, scope ('lead'/'client'), scope_id.
+   Optional: lead, client, ready_documents, suggestions.
+   Contact details always come from the scoped record — never hardcoded,
+   never another client's. #}
+<h2>Action center</h2>
+
+{% if suggestions %}
+<h3>Suggested next actions</h3>
+<ul class="ledger-list">
+    {% for s in suggestions %}
+    <li>
+        <a href="{{ url_for('admin.action_compose', kind=scope, scope_id=scope_id, purpose=s.purpose, document_id=s.document_id, project_id=s.project_id, invoice_id=s.invoice_id) }}">{{ s.label }}</a>
+        <span class="card-meta"> — {{ s.reason }}</span>
+    </li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+<h3>Contact</h3>
+<div class="ledger-actions">
+    {% if action_links.tel %}
+    <a class="button" href="{{ action_links.tel }}">Call</a>
+    {% else %}
+    <span class="action-disabled">Call — not available, no phone number recorded.</span>
+    {% endif %}
+    {% if action_links.has_whatsapp %}
+    <a class="button" href="{{ url_for('admin.action_compose', kind=scope, scope_id=scope_id, channel='WHATSAPP') }}">WhatsApp</a>
+    {% else %}
+    <span class="action-disabled">WhatsApp — not available, no phone number recorded.</span>
+    {% endif %}
+    {% if action_links.has_sms %}
+    <a class="button" href="{{ url_for('admin.action_compose', kind=scope, scope_id=scope_id, channel='SMS') }}">SMS</a>
+    {% else %}
+    <span class="action-disabled">SMS — not available, no phone number recorded.</span>
+    {% endif %}
+    {% if action_links.has_email %}
+    <a class="button" href="{{ url_for('admin.action_compose', kind=scope, scope_id=scope_id, channel='EMAIL') }}">Email</a>
+    {% else %}
+    <span class="action-disabled">Email — not available, no email address recorded.</span>
+    {% endif %}
+</div>
+
+<h3>Documents</h3>
+{% if ready_documents %}
+<ul class="ledger-list">
+    {% for doc in ready_documents %}
+    <li>
+        <strong>{{ doc.document_number or doc.title }}</strong> — {{ doc.title }}
+        <span class="pill pill-ready">{{ doc.status }}</span>
+        <a class="button" href="{{ url_for('admin.action_compose', kind=scope, scope_id=scope_id, document_id=doc.id) }}">Send</a>
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<div class="ledger-empty" role="status">
+    <p class="ledger-empty-title">No ready documents</p>
+    <p>No READY documents are available to share. DRAFT documents must be finished first; archived documents are view-only.</p>
+</div>
+{% endif %}
+
+{% if sendable_slots %}
+<h3>Send by type</h3>
+<ul class="ledger-list">
+    {% for slot in sendable_slots %}
+    <li>
+        <strong>{{ slot.label }}</strong> —
+        {% if slot.ready_doc %}
+        {{ slot.ready_doc.document_number or slot.ready_doc.title }}
+        <span class="pill pill-ready">READY</span>
+        <a class="button" href="{{ url_for('admin.action_compose', kind=scope, scope_id=scope_id, document_id=slot.ready_doc.id) }}">Send</a>
+        {% elif slot.draft_exists %}
+        <span class="card-meta">not ready — still a draft.</span>
+        {% else %}
+        <span class="card-meta">not ready.</span>
+        {% if client %}
+        <a href="{{ url_for('admin.client_detail', client_id=client.id) }}">Create in workspace</a>
+        {% elif linked_client %}
+        <a href="{{ url_for('admin.client_detail', client_id=linked_client.id) }}">Create in workspace</a>
+        {% else %}
+        <a href="{{ url_for('admin.document_list') }}">Open documents</a>
+        {% endif %}
+        {% endif %}
+    </li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+<h3>Follow-up</h3>
+{% if lead or (client and client.contact.leads) %}
+<p>
+    <a class="button" href="{{ url_for('admin.action_compose', kind=scope, scope_id=scope_id) }}">Follow up</a>
+</p>
+{% else %}
+<p class="card-meta">Follow-ups attach to a lead record — none exists for this contact yet.</p>
+{% endif %}

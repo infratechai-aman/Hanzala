@@ -1,0 +1,61 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Documents{% endblock %}
+
+{% block content %}
+<h1>Freelancer documents</h1>
+<p class="card-meta"><span>Private / Operations</span></p>
+<p>
+    <a class="button" href="{{ url_for('admin.document_new') }}">+ New document</a>
+</p>
+
+<form method="get" action="{{ url_for('admin.document_list') }}" class="filter-form">
+    <div class="field">
+        <label for="category">Filter by category</label>
+        <select id="category" name="category" onchange="this.form.submit()">
+            <option value="">All</option>
+            {% for code, label in categories.items() %}
+            <option value="{{ code }}" {% if code == active_filter %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <noscript><button type="submit">Filter</button></noscript>
+</form>
+
+{% if documents %}
+<div class="table-wrap">
+<table>
+    <thead>
+        <tr><th scope="col">#</th><th scope="col">Title</th><th scope="col">Category</th>
+            <th scope="col">Status</th><th scope="col">Client</th><th scope="col">Description</th><th scope="col">Updated</th><th scope="col">Actions</th></tr>
+    </thead>
+    <tbody>
+        {% for document in documents %}
+        <tr>
+            <td>{{ document.id }}</td>
+            <td>{{ document.title }}{% if document.is_legal_template %} <span class="pill">template</span>{% endif %}</td>
+            <td>{{ document.category_label }}</td>
+            <td><span class="pill pill-{{ document.status|lower }}">{{ document.status }}</span></td>
+            <td>{% if document.client %}{{ document.client.contact.name }}{% else %}—{% endif %}</td>
+            <td>{{ (document.description or '')|truncate(80) }}</td>
+            <td>{{ document.updated_at.strftime('%Y-%m-%d') }}</td>
+            <td class="actions">
+                <a href="{{ url_for('admin.document_detail', document_id=document.id) }}">Open</a>
+                <a href="{{ url_for('admin.document_edit', document_id=document.id) }}">Edit</a>
+                {% if document.status == 'READY' and document.client_id and is_sendable(document.doc_type) %}
+                <a href="{{ url_for('admin.action_compose', kind='client', scope_id=document.client_id, document_id=document.id) }}">Send</a>
+                {% endif %}
+                <form method="post" action="{{ url_for('admin.document_delete', document_id=document.id) }}" onsubmit="return confirm('Delete this document?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="danger">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}
+<p>No documents found.</p>
+{% endif %}
+{% endblock %}

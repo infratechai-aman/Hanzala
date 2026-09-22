@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="{% block meta_description %}Hanzala — CS student, builder, experimenter. Projects, process notes, and learning in public.{% endblock %}">
+    <title>{% block title %}Hanzala — Builder{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+        <div class="wrap instrument">
+            <div class="instrument-left">
+                <a class="brand" href="{{ url_for('public.index') }}">
+                    <img class="brand-avatar" src="{{ url_for('static', filename='images/hanzala-avatar.png') }}"
+                         alt="" width="240" height="305" loading="lazy">
+                    <span class="brand-mark" aria-hidden="true">HZ</span>
+                    <span class="brand-text">
+                        <span class="brand-name">PORTFOLIO / HZ</span>
+                        <span class="brand-sub">CS STUDENT &middot; BUILDER &middot; EXPERIMENTER</span>
+                    </span>
+                </a>
+            </div>
+            <nav aria-label="Primary">
+                <a href="{{ url_for('public.index') }}" {% if request.endpoint == 'public.index' %}aria-current="page"{% endif %}>Home</a>
+                <a href="{{ url_for('public.work') }}" {% if request.endpoint == 'public.work' or request.endpoint == 'public.project_detail' %}aria-current="page"{% endif %}>Work</a>
+                <a href="{{ url_for('public.rnd') }}" {% if request.endpoint == 'public.rnd' %}aria-current="page"{% endif %}>R&amp;D</a>
+                <a href="{{ url_for('public.process') }}" {% if request.endpoint == 'public.process' %}aria-current="page"{% endif %}>Process</a>
+                <a href="{{ url_for('public.context') }}" {% if request.endpoint == 'public.context' %}aria-current="page"{% endif %}>Context</a>
+                <a href="{{ url_for('public.learning') }}" {% if request.endpoint == 'public.learning' %}aria-current="page"{% endif %}>Learning</a>
+                <a href="{{ url_for('public.contact') }}" {% if request.endpoint == 'public.contact' %}aria-current="page"{% endif %}>Contact</a>
+            </nav>
+            <p class="instrument-status"><span class="pulse" aria-hidden="true"></span> Building in public</p>
+        </div>
+    </header>
+
+    <main class="wrap" id="main">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap site-footer-inner">
+            <div class="footer-identity">
+                <p class="footer-name">Hanzala</p>
+                <p>CS student &middot; builder &middot; experimenter.</p>
+                <p class="card-meta"><span>Built with Python / Flask / SQL / Jinja / HTML / CSS</span></p>
+            </div>
+            <nav aria-label="Footer">
+                <a href="{{ url_for('public.work') }}">Work</a>
+                <a href="{{ url_for('public.rnd') }}">R&amp;D</a>
+                <a href="{{ url_for('public.process') }}">Process</a>
+                <a href="{{ url_for('public.contact') }}">Contact</a>
+            </nav>
+            <div class="footer-elsewhere">
+                <p class="card-meta"><span>Elsewhere</span></p>
+                {% include "public/_social.html" %}
+                <p class="card-meta"><span>Verified project links</span></p>
+                {% include "public/_elsewhere.html" %}
+            </div>
+        </div>
+    </footer>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

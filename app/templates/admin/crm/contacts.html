@@ -1,0 +1,90 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Contacts{% endblock %}
+
+{% block content %}
+<h1>Contacts</h1>
+<p class="card-meta">Working CRM — every row is actionable. Filter by lifecycle state, then act.</p>
+
+<form method="get" action="{{ url_for('admin.contact_list') }}" class="filter-form">
+    <div class="field">
+        <label for="state">Filter by state</label>
+        <select id="state" name="state" onchange="this.form.submit()">
+            <option value="ALL" {% if active_filter == 'ALL' %}selected{% endif %}>All ({{ contacts|length if active_filter == 'ALL' else counts.NEW + counts.LEAD + counts.QUALIFIED + counts.CLIENT + counts.LOST }})</option>
+            <option value="NEW" {% if active_filter == 'NEW' %}selected{% endif %}>New contacts ({{ counts.NEW }})</option>
+            <option value="LEAD" {% if active_filter == 'LEAD' %}selected{% endif %}>Leads ({{ counts.LEAD }})</option>
+            <option value="QUALIFIED" {% if active_filter == 'QUALIFIED' %}selected{% endif %}>Qualified ({{ counts.QUALIFIED }})</option>
+            <option value="CLIENT" {% if active_filter == 'CLIENT' %}selected{% endif %}>Clients ({{ counts.CLIENT }})</option>
+            <option value="LOST" {% if active_filter == 'LOST' %}selected{% endif %}>Lost ({{ counts.LOST }})</option>
+        </select>
+    </div>
+    <noscript><button type="submit">Filter</button></noscript>
+</form>
+
+{% if contacts %}
+<div class="table-wrap">
+<table>
+    <thead>
+        <tr><th scope="col">Name</th><th scope="col">Company</th><th scope="col">Contact</th>
+            <th scope="col">State</th><th scope="col">Created</th><th scope="col">Actions</th></tr>
+    </thead>
+    <tbody>
+        {% for contact in contacts %}
+        {% set state = states[contact.id] %}
+        {% set link = links[contact.id] %}
+        <tr>
+            <td><a href="{{ url_for('admin.contact_detail', contact_id=contact.id) }}">{{ contact.name }}</a></td>
+            <td>{{ contact.company or '—' }}</td>
+            <td>
+                <span class="card-meta">{{ contact.email }}</span><br>
+                <span class="card-meta">{{ contact.phone or 'no phone' }}</span>
+            </td>
+            <td><span class="pill pill-{{ state|lower }}">{{ state }}</span></td>
+            <td>{{ contact.created_at.strftime('%Y-%m-%d') }}</td>
+            <td class="actions">
+                <a href="{{ url_for('admin.contact_detail', contact_id=contact.id) }}">View</a>
+                {% if link.tel %}<a href="{{ link.tel }}">Call</a>{% endif %}
+                {% if link.wa %}<a href="{{ link.wa }}" target="_blank" rel="noopener">WhatsApp</a>{% endif %}
+                {% if link.mail %}<a href="{{ link.mail }}">Email</a>{% endif %}
+                {% if not contact.leads and not contact.clients %}
+                <a href="{{ url_for('admin.contact_convert', contact_id=contact.id) }}">Convert to Lead</a>
+                {% endif %}
+                {% if contact.leads %}
+                {% set latest = contact.leads|sort(attribute='id')|last %}
+                <a href="{{ url_for('admin.lead_detail', lead_id=latest.id) }}">View Lead</a>
+                <form method="post" action="{{ url_for('admin.lead_update', lead_id=latest.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="next" value="{{ url_for('admin.contact_list', state=active_filter) }}">
+                    <input type="hidden" name="service_interest" value="{{ latest.service_interest or '' }}">
+                    <input type="hidden" name="estimated_value" value="{{ latest.estimated_value if latest.estimated_value is not none else '' }}">
+                    <label class="card-meta" for="status-{{ latest.id }}">Status</label>
+                    <select id="status-{{ latest.id }}" name="status">
+                        {% for s in lead_statuses %}
+                        <option value="{{ s }}" {% if s == latest.status %}selected{% endif %}>{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit">Save</button>
+                </form>
+                {% endif %}
+                {% if contact.clients %}
+                <a href="{{ url_for('admin.client_detail', client_id=contact.clients[0].id) }}">View Client</a>
+                {% endif %}
+                {% if not contact.leads and not contact.clients and not contact.notes %}
+                <form method="post" action="{{ url_for('admin.contact_delete', contact_id=contact.id) }}" onsubmit="return confirm('Delete this contact?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="danger">Delete</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}
+<div class="ledger-empty" role="status">
+    <p class="ledger-empty-title">No contacts in this state</p>
+    <p>No contact records match this filter. New inquiries from the contact form appear here.</p>
+</div>
+{% endif %}
+{% endblock %}

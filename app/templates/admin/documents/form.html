@@ -1,0 +1,77 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{% if document %}Edit {{ document.title }}{% else %}New document{% endif %}{% endblock %}
+
+{% block content %}
+<h1>{% if document %}Edit document{% else %}New document{% endif %}</h1>
+<form method="post" action="{% if document %}{{ url_for('admin.document_edit', document_id=document.id) }}{% else %}{{ url_for('admin.document_new') }}{% endif %}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="field">
+        <label for="title">Title *</label>
+        <input id="title" name="title" type="text" value="{{ form.title }}" required maxlength="200">
+        {% if errors.title %}<p class="field-error">{{ errors.title }}</p>{% endif %}
+    </div>
+    <div class="field">
+        <label for="category">Category *</label>
+        <select id="category" name="category" required>
+            <option value="">Select a category</option>
+            {% for code, label in categories.items() %}
+            <option value="{{ code }}" {% if form.category == code %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        {% if errors.category %}<p class="field-error">{{ errors.category }}</p>{% endif %}
+    </div>
+    <div class="field">
+        <label for="doc_type">Document type</label>
+        <select id="doc_type" name="doc_type">
+            <option value="">Select a type (must match the category)</option>
+            {% for code, types in document_types.items() %}
+            <optgroup label="{{ categories[code] }}">
+                {% for type in types %}
+                <option value="{{ type }}" {% if form.doc_type == type %}selected{% endif %}>{{ type }}</option>
+                {% endfor %}
+            </optgroup>
+            {% endfor %}
+        </select>
+        {% if errors.doc_type %}<p class="field-error">{{ errors.doc_type }}</p>{% endif %}
+    </div>
+    <div class="field">
+        <label for="status">Status *</label>
+        <select id="status" name="status" required>
+            {% for status in statuses %}
+            <option value="{{ status }}" {% if form.status == status %}selected{% endif %}>{{ status }}</option>
+            {% endfor %}
+        </select>
+        {% if errors.status %}<p class="field-error">{{ errors.status }}</p>{% endif %}
+    </div>
+    <div class="field">
+        <label for="client_id">Linked client (optional — required before sending)</label>
+        <select id="client_id" name="client_id">
+            <option value="">No client linked</option>
+            {% for c in clients %}
+            <option value="{{ c.id }}" {% if form.client_id == c.id|string %}selected{% endif %}>{{ c.contact.name }}{% if c.company %} — {{ c.company }}{% endif %}</option>
+            {% endfor %}
+        </select>
+        {% if errors.client %}<p class="field-error">{{ errors.client }}</p>{% endif %}
+    </div>
+    <div class="field">
+        <label for="project_id">Linked project (optional — must belong to the client)</label>
+        <select id="project_id" name="project_id">
+            <option value="">No project linked</option>
+            {% for p in client_projects %}
+            <option value="{{ p.id }}" {% if form.project_id == p.id|string %}selected{% endif %}>{{ p.name }} ({{ p.client.contact.name }})</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="field">
+        <label for="url_or_path">Document URL / Path</label>
+        <input id="url_or_path" name="url_or_path" type="text" value="{{ form.url_or_path }}" maxlength="2000" placeholder="https://...">
+        {% if errors.url_or_path %}<p class="field-error">{{ errors.url_or_path }}</p>{% endif %}
+    </div>
+    <div class="field">
+        <label for="description">Description</label>
+        <textarea id="description" name="description" rows="4">{{ form.description }}</textarea>
+    </div>
+    <button type="submit">{% if document %}Save changes{% else %}Create document{% endif %}</button>
+</form>
+{% endblock %}

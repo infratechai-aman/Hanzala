@@ -1,0 +1,131 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Lead — {{ lead.contact.name }}{% endblock %}
+
+{% block content %}
+<h1>Lead: {{ lead.contact.name }}</h1>
+<p><a href="{{ url_for('admin.lead_list') }}">Back to leads</a></p>
+<form method="post" action="{{ url_for('admin.lead_delete', lead_id=lead.id) }}" onsubmit="return confirm('Delete this lead? Its notes and follow-ups will go too. The contact stays.');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="danger">Delete lead</button>
+</form>
+
+<h2>Contact information</h2>
+<dl class="detail">
+    <div><dt>Name</dt><dd>{{ lead.contact.name }}</dd></div>
+    <div><dt>Email</dt><dd>{{ lead.contact.email }}</dd></div>
+    <div><dt>Phone</dt><dd>{{ lead.contact.phone or '—' }}</dd></div>
+    <div><dt>Company</dt><dd>{{ lead.contact.company or '—' }}</dd></div>
+    <div><dt>Message</dt><dd>{{ lead.contact.message or '—' }}</dd></div>
+    <div><dt>Source</dt><dd>{{ lead.contact.source or '—' }}</dd></div>
+</dl>
+
+{% set contact = lead.contact %}
+{% set scope = 'lead' %}
+{% set scope_id = lead.id %}
+{% include "admin/crm/_action_center.html" %}
+
+{% if lead.status == 'LOST' %}
+<h2>Reopen</h2>
+<form method="post" action="{{ url_for('admin.lead_update', lead_id=lead.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="status" value="LEAD">
+    <input type="hidden" name="service_interest" value="{{ lead.service_interest or '' }}">
+    <input type="hidden" name="estimated_value" value="{{ lead.estimated_value if lead.estimated_value is not none else '' }}">
+    <button type="submit">Reopen lead</button>
+</form>
+{% endif %}
+{% if linked_client %}
+<p><a class="button" href="{{ url_for('admin.client_detail', client_id=linked_client.id) }}">Open client workspace</a></p>
+{% endif %}
+
+<h2>Lead information</h2>
+<form method="post" action="{{ url_for('admin.lead_update', lead_id=lead.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="field">
+        <label for="status">Status</label>
+        <select id="status" name="status">
+            {% for status in statuses %}
+            <option value="{{ status }}" {% if status == lead.status %}selected{% endif %}>{{ status }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="field">
+        <label for="service_interest">Service interest</label>
+        <input id="service_interest" name="service_interest" type="text" value="{{ lead.service_interest or '' }}" maxlength="200">
+    </div>
+    <div class="field">
+        <label for="estimated_value">Estimated value</label>
+        <input id="estimated_value" name="estimated_value" type="text" inputmode="decimal" value="{{ lead.estimated_value if lead.estimated_value is not none else '' }}" placeholder="0.00">
+    </div>
+    <div class="field">
+        <label for="last_contacted_at">Last contacted (leave empty to keep)</label>
+        <input id="last_contacted_at" name="last_contacted_at" type="datetime-local">
+    </div>
+    <div class="field field-inline">
+        <input id="contact_now" name="contact_now" type="checkbox">
+        <label for="contact_now">Mark contacted right now</label>
+    </div>
+    <button type="submit">Save lead</button>
+</form>
+<dl class="detail">
+    <div><dt>Created</dt><dd>{{ lead.created_at.strftime('%Y-%m-%d %H:%M') }}</dd></div>
+    <div><dt>Last contacted</dt><dd>{{ lead.last_contacted_at.strftime('%Y-%m-%d %H:%M') if lead.last_contacted_at else '—' }}</dd></div>
+</dl>
+
+<h2>Notes</h2>
+{% for note in lead.lead_notes|sort(attribute='created_at', reverse=true) %}
+<div class="inline-form">
+    <p>{{ note.content }}</p>
+    <p class="card-meta">{{ note.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+</div>
+{% else %}
+<p>No notes yet.</p>
+{% endfor %}
+<h3>Add note</h3>
+<form method="post" action="{{ url_for('admin.note_create', lead_id=lead.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="field">
+        <label for="note-content">Note</label>
+        <textarea id="note-content" name="content" rows="3" required></textarea>
+    </div>
+    <button type="submit">Add note</button>
+</form>
+
+<h2>Follow-ups</h2>
+{% for followup in lead.followups|sort(attribute='scheduled_at') %}
+<div class="inline-form">
+    <p>
+        {{ followup.scheduled_at.strftime('%Y-%m-%d %H:%M') if followup.scheduled_at else 'Unscheduled' }}
+        —
+        {% if followup.completed_at %}
+        completed {{ followup.completed_at.strftime('%Y-%m-%d %H:%M') }}
+        {% else %}
+        <strong>open</strong>
+        {% endif %}
+    </p>
+    {% if followup.note %}<p>{{ followup.note }}</p>{% endif %}
+    {% if not followup.completed_at %}
+    <form method="post" action="{{ url_for('admin.followup_complete', followup_id=followup.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit">Mark completed</button>
+    </form>
+    {% endif %}
+</div>
+{% else %}
+<p>No follow-ups yet.</p>
+{% endfor %}
+<h3>Schedule follow-up</h3>
+<form method="post" action="{{ url_for('admin.followup_create', lead_id=lead.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="field">
+        <label for="scheduled_at">Scheduled at</label>
+        <input id="scheduled_at" name="scheduled_at" type="datetime-local" required>
+    </div>
+    <div class="field">
+        <label for="followup-note">Note</label>
+        <textarea id="followup-note" name="note" rows="2"></textarea>
+    </div>
+    <button type="submit">Schedule follow-up</button>
+</form>
+{% endblock %}

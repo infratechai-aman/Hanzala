@@ -1,0 +1,303 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<header class="ledger-masthead">
+    <p class="ledger-kicker">System / Portfolio &mdash; Private Admin</p>
+    <h1>Operations</h1>
+    <p class="ledger-meta">
+        <span>Current records</span>
+        <span aria-hidden="true">/</span>
+        <span>Last updated {% if last_updated %}{{ last_updated.strftime('%Y-%m-%d %H:%M') }}{% else %}&mdash;{% endif %}</span>
+    </p>
+</header>
+
+<h2>Overview</h2>
+<dl class="ledger-metrics">
+    <div class="metric">
+        <span class="metric-index" aria-hidden="true">01</span>
+        <dt>Active Clients</dt><dd>{{ stats.clients }}</dd>
+        <p class="metric-note">Client records on file. {% if stats.clients %}Status / on record.{% else %}Status / clear &mdash; no clients yet.{% endif %}</p>
+    </div>
+    <div class="metric">
+        <span class="metric-index" aria-hidden="true">02</span>
+        <dt>Active Projects</dt><dd>{{ stats.active_work_projects }}</dd>
+        <p class="metric-note">Client work in progress. {% if stats.active_work_projects %}Status / attention.{% else %}Status / clear &mdash; no active projects.{% endif %}</p>
+    </div>
+    <div class="metric">
+        <span class="metric-index" aria-hidden="true">03</span>
+        <dt>Follow-ups Due</dt><dd>{{ stats.followups_due }}</dd>
+        <p class="metric-note">Overdue or due today. {% if stats.followups_due %}Status / attention.{% else %}Status / clear &mdash; queue empty.{% endif %}</p>
+    </div>
+    <div class="metric">
+        <span class="metric-index" aria-hidden="true">04</span>
+        <dt>Pending Approvals</dt><dd>{{ stats.pending_approvals }}</dd>
+        <p class="metric-note">Versions awaiting decision. {% if stats.pending_approvals %}Status / attention.{% else %}Status / clear &mdash; archive clear.{% endif %}</p>
+    </div>
+    <div class="metric">
+        <span class="metric-index" aria-hidden="true">05</span>
+        <dt>Open Revisions</dt><dd>{{ stats.open_revisions }}</dd>
+        <p class="metric-note">Revision requests open. {% if stats.open_revisions %}Status / attention.{% else %}Status / clear &mdash; no open requests.{% endif %}</p>
+    </div>
+    <div class="metric">
+        <span class="metric-index" aria-hidden="true">06</span>
+        <dt>Unpaid Invoices</dt><dd>{{ stats.unpaid_invoices }}</dd>
+        <p class="metric-note">Issued, partial or overdue. {% if stats.unpaid_invoices %}Status / attention.{% else %}Status / clear &mdash; finance clear.{% endif %}</p>
+    </div>
+</dl>
+
+<h2>Attention</h2>
+{% if overdue or today or upcoming %}
+{% if overdue %}
+<h3>Overdue</h3>
+<ul class="ledger-list">
+    {% for followup in overdue %}
+    <li><a href="{{ url_for('admin.lead_detail', lead_id=followup.lead_id) }}">{{ followup.lead.contact.name }}</a> — {{ followup.scheduled_at.strftime('%Y-%m-%d %H:%M') }}{% if followup.note %} — {{ followup.note }}{% endif %}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+{% if today %}
+<h3>Today</h3>
+<ul class="ledger-list">
+    {% for followup in today %}
+    <li><a href="{{ url_for('admin.lead_detail', lead_id=followup.lead_id) }}">{{ followup.lead.contact.name }}</a> — {{ followup.scheduled_at.strftime('%Y-%m-%d %H:%M') }}{% if followup.note %} — {{ followup.note }}{% endif %}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+{% if upcoming %}
+<h3>Upcoming</h3>
+<ul class="ledger-list">
+    {% for followup in upcoming %}
+    <li><a href="{{ url_for('admin.lead_detail', lead_id=followup.lead_id) }}">{{ followup.lead.contact.name }}</a> — {{ followup.scheduled_at.strftime('%Y-%m-%d %H:%M') }}{% if followup.note %} — {{ followup.note }}{% endif %}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+{% else %}
+<div class="ledger-empty" role="status">
+    <p class="ledger-empty-title">Queue clear</p>
+    <p>Nothing requires attention.</p>
+</div>
+{% endif %}
+
+<h2>Action required</h2>
+<dl class="ledger-metrics ledger-metrics-small">
+    <div class="metric"><dt>Follow-ups due</dt><dd>{{ stats.followups_due }}</dd></div>
+    <div class="metric"><dt>Awaiting approval</dt><dd>{{ stats.pending_approvals }}</dd></div>
+    <div class="metric"><dt>Overdue invoices</dt><dd>{{ finance.overdue_count }}</dd></div>
+</dl>
+{% if stats.followups_due or stats.pending_approvals or finance.overdue_count %}
+<ul class="ledger-list">
+    {% if stats.followups_due %}<li>{{ stats.followups_due }} follow-up(s) due — <a href="{{ url_for('admin.crm_dashboard') }}">Review</a></li>{% endif %}
+    {% if stats.pending_approvals %}<li>{{ stats.pending_approvals }} document(s) awaiting approval — <a href="{{ url_for('admin.document_list') }}">Review</a></li>{% endif %}
+    {% for invoice in overdue_invoices %}
+    <li>{{ invoice.invoice_number }} ({{ invoice.client.contact.name if invoice.client and invoice.client.contact else '—' }}) overdue — <a href="{{ url_for('admin.client_detail', client_id=invoice.client_id) }}">Review</a></li>
+    {% endfor %}
+</ul>
+{% else %}
+<div class="ledger-empty" role="status">
+    <p class="ledger-empty-title">Nothing actionable</p>
+    <p>No follow-ups due, no approvals pending, no invoices overdue.</p>
+</div>
+{% endif %}
+
+<h2>Lead pipeline</h2>
+<dl class="ledger-bars">
+    {% for status, count in pipeline %}
+    <div class="ledger-bar-row">
+        <dt>{{ status }}</dt><dd>{{ count }}</dd>
+        <span class="ledger-bar-track" aria-hidden="true"><span class="ledger-bar-fill" style="width: {{ ((count / pipeline_max * 100) | round(1)) if pipeline_max else 0 }}%"></span></span>
+        <a class="ledger-bar-link" href="{{ url_for('admin.lead_list', status=status) }}">View</a>
+    </div>
+    {% endfor %}
+</dl>
+
+<h2>Recent leads</h2>
+{% if recent_leads %}
+<div class="table-wrap">
+<table>
+    <thead>
+        <tr><th scope="col">Name</th><th scope="col">Company</th><th scope="col">Service</th><th scope="col">Status</th><th scope="col">Created</th></tr>
+    </thead>
+    <tbody>
+        {% for lead in recent_leads %}
+        <tr>
+            <td><a href="{{ url_for('admin.lead_detail', lead_id=lead.id) }}">{{ lead.contact.name }}</a></td>
+            <td>{{ lead.contact.company or '—' }}</td>
+            <td>{{ lead.service_interest or '—' }}</td>
+            <td><span class="pill pill-{{ lead.status|lower }}">{{ lead.status }}</span></td>
+            <td>{{ lead.created_at.strftime('%Y-%m-%d') }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}
+<div class="ledger-empty" role="status">
+    <p class="ledger-empty-title">No lead records</p>
+    <p>The system currently contains no leads. New enquiries from the contact form appear here.</p>
+</div>
+{% endif %}
+
+<h2>Project operations</h2>
+{% if work_projects %}
+<div class="table-wrap">
+<table>
+    <thead>
+        <tr><th scope="col">No.</th><th scope="col">Project</th><th scope="col">Client</th><th scope="col">Status</th><th scope="col">Due</th><th scope="col">Milestones</th><th scope="col">Deliverables</th></tr>
+    </thead>
+    <tbody>
+        {% for row in work_projects %}
+        <tr>
+            <td>{{ '%02d' % loop.index }}</td>
+            <td><a href="{{ url_for('admin.client_detail', client_id=row.client_id) }}">{{ row.project.name }}</a></td>
+            <td>{{ row.client_name }}</td>
+            <td><span class="pill pill-{{ row.project.status|lower }}">{{ row.project.status }}</span></td>
+            <td>{{ row.project.due_date or '—' }}</td>
+            <td>{{ row.milestones }}</td>
+            <td>{{ row.deliverables }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}
+<div class="ledger-empty" role="status">
+    <p class="ledger-empty-title">No work records</p>
+    <p>No client projects are on record. Create one from a client workspace.</p>
+</div>
+{% endif %}
+{% if work_status_dist %}
+<dl class="ledger-bars ledger-bars-small">
+    {% for status, count in work_status_dist %}
+    <div class="ledger-bar-row">
+        <dt>{{ status }}</dt><dd>{{ count }}</dd>
+        <span class="ledger-bar-track" aria-hidden="true"><span class="ledger-bar-fill" style="width: {{ ((count / work_status_dist[0][1] * 100) | round(1)) if work_status_dist[0][1] else 0 }}%"></span></span>
+    </div>
+    {% endfor %}
+</dl>
+{% endif %}
+
+<h2>Recent projects</h2>
+{% if recent_projects %}
+<ul class="ledger-list">
+    {% for project in recent_projects %}
+    <li><a href="{{ url_for('admin.project_edit', project_id=project.id) }}">{{ project.title }}</a> <span class="card-meta">({{ project.status }}, updated {{ project.updated_at.strftime('%Y-%m-%d') }})</span></li>
+    {% endfor %}
+</ul>
+{% else %}
+<div class="ledger-empty" role="status">
+    <p class="ledger-empty-title">No portfolio records</p>
+    <p>No portfolio projects are on record yet.</p>
+</div>
+{% endif %}
+
+<h2>Documents</h2>
+<dl class="ledger-metrics ledger-metrics-small">
+    <div class="metric"><dt>Total</dt><dd>{{ doc_stats.total }}</dd></div>
+    <div class="metric"><dt>Draft</dt><dd>{{ doc_stats.draft }}</dd></div>
+    <div class="metric"><dt>Ready</dt><dd>{{ doc_stats.ready }}</dd></div>
+    <div class="metric"><dt>Archived</dt><dd>{{ doc_stats.archived }}</dd></div>
+</dl>
+<p class="card-meta">
+    {% for label, count in docs_by_category %}<span>{{ label }}: {{ count }}</span>{% if not loop.last %} · {% endif %}{% endfor %}
+</p>
+{% if recent_documents %}
+<ul class="ledger-list">
+    {% for document in recent_documents %}
+    <li><a href="{{ url_for('admin.document_detail', document_id=document.id) }}">{{ document.title }}</a> <span class="card-meta">({{ document.category_label }}, {{ document.status }})</span></li>
+    {% endfor %}
+</ul>
+{% else %}
+<div class="ledger-empty" role="status">
+    <p class="ledger-empty-title">Archive empty</p>
+    <p>No documents are on record. Commercial records are created from a client workspace.</p>
+</div>
+{% endif %}
+<p class="ledger-actions">
+    <a class="button" href="{{ url_for('admin.document_list') }}">Open documents</a>
+    <a class="button" href="{{ url_for('admin.document_new') }}">+ New document</a>
+</p>
+
+<h2>Finance</h2>
+{% if finance.invoiced != 0 %}
+<dl class="ledger-metrics ledger-metrics-small">
+    <div class="metric"><dt>Invoiced</dt><dd>{{ finance.invoiced }}</dd></div>
+    <div class="metric"><dt>Paid</dt><dd>{{ finance.paid }}</dd></div>
+    <div class="metric"><dt>Outstanding</dt><dd>{{ finance.outstanding }}</dd></div>
+    <div class="metric"><dt>Overdue</dt><dd>{{ finance.overdue_count }}</dd></div>
+</dl>
+{% if invoice_status_dist %}
+<dl class="ledger-bars ledger-bars-small">
+    {% for status, count in invoice_status_dist %}
+    <div class="ledger-bar-row">
+        <dt>{{ status }}</dt><dd>{{ count }}</dd>
+        <span class="ledger-bar-track" aria-hidden="true"><span class="ledger-bar-fill" style="width: {{ ((count / invoice_status_dist[0][1] * 100) | round(1)) if invoice_status_dist[0][1] else 0 }}%"></span></span>
+    </div>
+    {% endfor %}
+</dl>
+{% endif %}
+{% else %}
+<div class="ledger-empty" role="status">
+    <p class="ledger-empty-title">Finance / clear</p>
+    <p>No outstanding invoices. No active invoice records currently require attention.</p>
+</div>
+{% endif %}
+
+<h2>Activity</h2>
+{% if activity_max %}
+<figure class="ledger-chart">
+    <svg viewBox="0 0 280 84" role="img" aria-label="Activity events per day over the last fourteen days">
+        {% for label, count in activity_days %}
+        <rect x="{{ loop.index0 * 20 + 2 }}" y="{{ 64 - ((count / activity_max * 56) | round(0)) if activity_max else 64 }}" width="14" height="{{ ((count / activity_max * 56) | round(0)) if activity_max else 0 }}" class="ledger-chart-bar">
+            <title>{{ label }}: {{ count }} events</title>
+        </rect>
+        {% endfor %}
+        <line x1="0" y1="64" x2="280" y2="64" class="ledger-chart-axis" />
+    </svg>
+    <figcaption class="card-meta">Events per day &mdash; trailing fourteen days, server-rendered from the activity record.</figcaption>
+</figure>
+{% else %}
+<div class="ledger-empty" role="status">
+    <p class="ledger-empty-title">No charted activity</p>
+    <p>No activity events in the trailing fourteen days. The ledger below shows the full record when present.</p>
+</div>
+{% endif %}
+<h3>Recent activity</h3>
+{% if recent_activity %}
+<div class="table-wrap">
+<table class="ledger-table">
+    <thead>
+        <tr><th scope="col">Timestamp</th><th scope="col">Event</th><th scope="col">Entity</th><th scope="col">Record</th><th scope="col">Actor</th></tr>
+    </thead>
+    <tbody>
+        {% for event in recent_activity %}
+        <tr>
+            <td>{{ event.created_at.strftime('%d %b %Y %H:%M') }}</td>
+            <td>{{ event.event_type }}</td>
+            <td>{{ event.entity_type or '—' }}{% if event.entity_id %} #{{ event.entity_id }}{% endif %}</td>
+            <td>{{ event.description }}</td>
+            <td>{{ actor_names.get(event.actor_id, '—') if event.actor_id else '—' }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+<p class="card-meta">Chronological application activity record &mdash; internal history, not legal proof.</p>
+{% else %}
+<div class="ledger-empty" role="status">
+    <p class="ledger-empty-title">Ledger empty</p>
+    <p>No activity has been recorded yet. Each operational change writes one row here.</p>
+</div>
+{% endif %}
+
+<h2>Commands</h2>
+<p class="ledger-actions">
+    <a class="button" href="{{ url_for('admin.document_new') }}">+ Document</a>
+    <a class="button" href="{{ url_for('admin.project_new') }}">+ Project</a>
+    <a class="button" href="{{ url_for('admin.crm_dashboard') }}">Open CRM</a>
+    <a class="button" href="{{ url_for('admin.lead_list') }}">Leads</a>
+    <a class="button" href="{{ url_for('admin.contact_list') }}">Contacts</a>
+    <a class="button" href="{{ url_for('admin.vault_list') }}">Media vault</a>
+</p>
+{% endblock %}

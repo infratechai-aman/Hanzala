@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}R&amp;D — Hanzala{% endblock %}
+{% block meta_description %}Open research and experiments by Hanzala: documented questions, not finished products.{% endblock %}
+
+{% block content %}
+<h1>R&amp;D</h1>
+<p class="lede">Open questions being worked through in public. Nothing here is presented as finished —
+    each entry shows its status, its evidence, and what is still unknown.</p>
+{% if category.description %}<p>{{ category.description }}</p>{% endif %}
+
+{% if projects %}
+    {% for project in projects %}
+    {% with file_number=loop.index %}{% include "public/_project_file.html" %}{% endwith %}
+    {% endfor %}
+{% else %}
+<p>No R&amp;D entries published yet.</p>
+{% endif %}
+{% endblock %}

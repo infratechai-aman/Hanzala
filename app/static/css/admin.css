@@ -1,0 +1,567 @@
+/* Admin panel styles. Separate from public styles. No framework. */
+
+:root {
+    /* Content palette follows the public portfolio: paper / ink / grid
+       with signal red, technical blue and rare lime reserved for status.
+       Header tokens below stay exactly as they were. */
+    --admin-bg: #F1EBDD;
+    --admin-surface: #E7DFCE;
+    --admin-ink: #11100D;
+    --admin-muted: #5C564A;
+    --admin-line: #D5CEC1;
+    --admin-brand: #18181b;
+    --admin-brand-text: #fafafa;
+    --admin-danger: #F0442E;
+    --admin-danger-bg: #fdeceb;
+    --admin-focus: #3047C7;
+    --admin-ok: #11100D;
+    --admin-ok-bg: rgba(183, 210, 43, 0.32);
+    --admin-warn: #92400e;
+    --admin-warn-bg: #fef3e2;
+    --admin-info: #3047C7;
+    --admin-info-bg: #e8eefc;
+    --admin-rd: #292722;
+    --admin-rd-bg: #E7DFCE;
+    --admin-radius: 4px;
+    --admin-width: 1080px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.6;
+    color: var(--admin-ink);
+    background: var(--admin-bg);
+    /* faint 48px technical grid, same rhythm as the public portfolio */
+    background-image:
+        linear-gradient(to right, rgba(17, 16, 13, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(17, 16, 13, 0.05) 1px, transparent 1px);
+    background-size: 48px 48px;
+    overflow-x: clip;
+}
+
+.admin-header {
+    background: var(--admin-brand);
+    color: var(--admin-brand-text);
+}
+
+.admin-header-inner {
+    max-width: var(--admin-width);
+    margin: 0 auto;
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.admin-brand {
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    margin-right: auto;
+}
+
+.admin-header nav {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.admin-header a {
+    color: var(--admin-brand-text);
+}
+
+.admin-header a:hover {
+    text-decoration-thickness: 2px;
+}
+
+.logout-form {
+    margin: 0;
+}
+
+.logout-form button {
+    background: transparent;
+    border: 1px solid var(--admin-muted);
+    color: var(--admin-brand-text);
+    padding: 0.25rem 0.75rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
+.admin-container {
+    max-width: var(--admin-width);
+    margin: 0 auto;
+    padding: 2rem 1rem 4rem;
+}
+
+.admin-container h1 {
+    font-size: clamp(2rem, 5vw, 3rem);
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+    margin: 0 0 1rem;
+}
+
+.admin-container h2 {
+    font-size: 1.1rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin: 2.5rem 0 0.75rem;
+    padding-top: 0.5rem;
+    border-top: 2px solid var(--admin-ink);
+}
+
+.admin-container h3 {
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--admin-muted);
+    margin: 1.5rem 0 0.5rem;
+}
+
+.card-meta {
+    font-size: 0.875rem;
+    color: var(--admin-muted);
+}
+
+.flash {
+    padding: 0.75rem 1rem;
+    border-radius: var(--admin-radius);
+}
+
+.flash-success {
+    background: var(--admin-ok-bg);
+    border: 1px solid var(--admin-ok);
+}
+
+.flash-error {
+    background: var(--admin-danger-bg);
+    border: 1px solid var(--admin-danger);
+}
+
+form {
+    max-width: 640px;
+}
+
+.field {
+    margin-bottom: 1rem;
+}
+
+.field label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.field-inline {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.field-inline label {
+    margin-bottom: 0;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="url"],
+input[type="number"],
+select,
+textarea {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--admin-muted);
+    border-radius: var(--admin-radius);
+    font: inherit;
+}
+
+input[type="checkbox"] {
+    width: auto;
+}
+
+button,
+.button {
+    display: inline-block;
+    background: var(--admin-brand);
+    color: var(--admin-brand-text);
+    border: none;
+    border-radius: var(--admin-radius);
+    padding: 0.5rem 1rem;
+    font: inherit;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+button.danger {
+    background: var(--admin-danger);
+}
+
+.field-error {
+    color: var(--admin-danger);
+    margin: 0.25rem 0 0;
+    font-size: 0.875rem;
+}
+
+/* status pills: text always present, color is decoration only */
+.pill {
+    display: inline-block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border: 1px solid var(--admin-muted);
+    border-radius: 999px;
+    padding: 0.1em 0.6em;
+    white-space: nowrap;
+}
+
+.pill-lead { color: var(--admin-info); border-color: var(--admin-info); background: var(--admin-info-bg); }
+.pill-qualified { color: var(--admin-ok); border-color: var(--admin-ok); background: var(--admin-ok-bg); }
+.pill-client { color: var(--admin-brand-text); border-color: var(--admin-ok); background: var(--admin-ok); }
+.pill-contact { color: var(--admin-muted); }
+.pill-lost { color: var(--admin-danger); border-color: var(--admin-danger); }
+.pill-completed { color: var(--admin-ok); border-color: var(--admin-ok); background: var(--admin-ok-bg); }
+.pill-prototype { color: var(--admin-warn); border-color: var(--admin-warn); background: var(--admin-warn-bg); }
+.pill-beta { color: var(--admin-info); border-color: var(--admin-info); background: var(--admin-info-bg); }
+.pill-rd { color: var(--admin-rd); border-color: var(--admin-rd); background: var(--admin-rd-bg); }
+.pill-planning { color: var(--admin-muted); }
+.pill-draft { color: var(--admin-muted); }
+.pill-ready { color: var(--admin-ok); border-color: var(--admin-ok); background: var(--admin-ok-bg); }
+.pill-archived { color: var(--admin-brand-text); background: var(--admin-muted); border-color: var(--admin-muted); }
+
+.table-wrap {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    min-width: 36rem;
+    border-collapse: collapse;
+    background: var(--admin-surface);
+}
+
+th,
+td {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--admin-line);
+    vertical-align: top;
+}
+
+thead th {
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--admin-muted);
+}
+
+td.actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+td.actions form {
+    margin: 0;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+}
+
+.stat {
+    background: var(--admin-surface);
+    border: 1px solid var(--admin-line);
+    border-radius: var(--admin-radius);
+    padding: 1rem;
+}
+
+.stat dt {
+    font-size: 0.875rem;
+    color: var(--admin-muted);
+}
+
+.stat dd {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+
+.detail div {
+    display: flex;
+    gap: 1rem;
+    padding: 0.25rem 0;
+    flex-wrap: wrap;
+}
+
+.detail dt {
+    font-weight: 600;
+    min-width: 120px;
+}
+
+.detail dd {
+    margin: 0;
+}
+
+.inline-form {
+    border: 1px solid var(--admin-line);
+    background: var(--admin-surface);
+    border-radius: var(--admin-radius);
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.filter-form {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+.filter-form .field {
+    margin-bottom: 0;
+    min-width: 12rem;
+}
+
+:focus-visible {
+    outline: 2px solid var(--admin-focus);
+    outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+    .admin-header-inner {
+        gap: 0.5rem;
+    }
+
+    .admin-container {
+        padding: 1.25rem 0.75rem 3rem;
+    }
+
+    table {
+        font-size: 0.875rem;
+    }
+
+    .ledger-metrics {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .ledger-bar-row {
+        grid-template-columns: 6.5rem 2.5rem 1fr;
+    }
+}
+
+/* ------------------------------------------------ operations ledger
+   Dashboard-only record-board vocabulary: masthead, editorial metric
+   cells, ruled lists, indexed bars, SVG chart, archival empty states.
+   No gradients, no shadows, no icon fonts. */
+
+.ledger-masthead {
+    border-bottom: 2px solid var(--admin-ink);
+    padding-bottom: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.ledger-masthead h1 {
+    margin: 0;
+}
+
+.ledger-kicker {
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--admin-muted);
+    margin: 0 0 0.25rem;
+}
+
+.ledger-meta {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--admin-muted);
+    margin: 0.5rem 0 0;
+}
+
+.ledger-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0;
+    margin: 0;
+    border-left: 1px solid var(--admin-line);
+}
+
+.ledger-metrics .metric {
+    border-top: 2px solid var(--admin-ink);
+    border-right: 1px solid var(--admin-line);
+    padding: 0.75rem 0.75rem 1rem;
+}
+
+.ledger-metrics-small {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+
+.metric-index {
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    color: var(--admin-muted);
+}
+
+.ledger-metrics dt {
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--admin-muted);
+    margin-top: 0.25rem;
+}
+
+.ledger-metrics dd {
+    margin: 0;
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1.1;
+    overflow-wrap: break-word;
+}
+
+.ledger-metrics-small dd {
+    font-size: 1.5rem;
+}
+
+.metric-note {
+    font-size: 0.8rem;
+    color: var(--admin-muted);
+    margin: 0.25rem 0 0;
+}
+
+.ledger-empty {
+    border: 1px solid var(--admin-line);
+    border-left: 3px solid var(--admin-ink);
+    padding: 1rem 1.25rem;
+    margin: 0 0 1rem;
+}
+
+.ledger-empty p {
+    margin: 0.25rem 0 0;
+    color: var(--admin-muted);
+}
+
+.ledger-empty-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--admin-ink);
+}
+
+.ledger-list {
+    list-style: none;
+    margin: 0 0 1rem;
+    padding: 0;
+}
+
+.ledger-list li {
+    padding: 0.4rem 0;
+    border-bottom: 1px solid var(--admin-line);
+}
+
+.ledger-bars {
+    margin: 0 0 1rem;
+}
+
+.ledger-bar-row {
+    display: grid;
+    grid-template-columns: 9rem 3rem 1fr auto;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.3rem 0;
+    border-bottom: 1px solid var(--admin-line);
+}
+
+.ledger-bar-row dt {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.ledger-bar-row dd {
+    margin: 0;
+    font-weight: 700;
+    text-align: right;
+}
+
+.ledger-bar-track {
+    display: block;
+    height: 0.5rem;
+    background: var(--admin-line);
+}
+
+.ledger-bar-fill {
+    display: block;
+    height: 100%;
+    background: var(--admin-ink);
+}
+
+.ledger-bar-link {
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.ledger-chart {
+    margin: 0 0 1rem;
+    border: 1px solid var(--admin-line);
+    padding: 1rem;
+}
+
+.ledger-chart svg {
+    display: block;
+    width: 100%;
+    max-width: 560px;
+    height: auto;
+}
+
+.ledger-chart-bar {
+    fill: var(--admin-ink);
+}
+
+.ledger-chart-axis {
+    stroke: var(--admin-ink);
+    stroke-width: 1;
+}
+
+.ledger-chart figcaption {
+    margin-top: 0.5rem;
+}
+
+.ledger-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.ledger-actions .button {
+    border: 1px solid var(--admin-ink);
+}
+
+/* Action center: unavailable actions read as record notes, not buttons. */
+.action-disabled {
+    display: inline-block;
+    font-size: 0.8rem;
+    color: var(--admin-muted);
+    border: 1px dashed var(--admin-muted);
+    border-radius: var(--admin-radius);
+    padding: 0.5rem 1rem;
+}
+

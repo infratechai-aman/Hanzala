@@ -1,0 +1,8 @@
+{# Verified external presence. Only renders links that exist in the database. #}
+{% if elsewhere_links %}
+<ul class="elsewhere">
+    {% for link in elsewhere_links %}
+    <li><a href="{{ link.url }}" target="_blank" rel="noopener noreferrer">{{ link.label }} — {{ link.project.title }} &nearr;</a></li>
+    {% endfor %}
+</ul>
+{% endif %}

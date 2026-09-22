@@ -1,0 +1,77 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Compose action — {{ contact.name }}{% endblock %}
+
+{% block content %}
+<h1>Compose action</h1>
+<p class="card-meta">Client &rarr; Why &rarr; Action &rarr; Channel &rarr; Message &rarr; You confirm.</p>
+
+<dl class="detail">
+    <div><dt>Recipient</dt><dd>{{ contact.name }}{% if contact.company %} — {{ contact.company }}{% endif %}</dd></div>
+    {% if document %}<div><dt>Document</dt><dd>{{ document.document_number or document.title }} — {{ document.title }} ({{ document.status }})</dd></div>{% endif %}
+    {% if document and doc_public_url %}<div><dt>Document link</dt><dd><a href="{{ doc_public_url }}" target="_blank" rel="noopener">{{ doc_public_url }}</a> <span class="card-meta">(public link — included in the message)</span></dd></div>{% endif %}
+    {% if document and not doc_public_url %}<div><dt>Document file</dt><dd>Private location — attach it manually in your mail/WhatsApp app. A mailto/SMS link can never attach a local file automatically.</dd></div>{% endif %}
+    {% if project %}<div><dt>Project</dt><dd>{{ project.name }} ({{ project.status }})</dd></div>{% endif %}
+    {% if invoice %}<div><dt>Invoice</dt><dd>{{ invoice.invoice_number }} — {{ invoice.amount }}</dd></div>{% endif %}
+</dl>
+
+{% if doc_blocked_reason %}
+<p class="flash flash-error">{{ doc_blocked_reason }}</p>
+{% endif %}
+
+{% if not document and attachable %}
+<form method="get" action="{{ url_for('admin.action_compose', kind=kind, scope_id=scope_id) }}">
+    <input type="hidden" name="purpose" value="{{ purpose }}">
+    <input type="hidden" name="channel" value="{{ channel }}">
+    {% if project %}<input type="hidden" name="project_id" value="{{ project.id }}">{% endif %}
+    {% if invoice %}<input type="hidden" name="invoice_id" value="{{ invoice.id }}">{% endif %}
+    <div class="field">
+        <label for="ac-document">Attach a READY document (optional)</label>
+        <select id="ac-document" name="document_id">
+            <option value="">—</option>
+            {% for doc in attachable %}
+            <option value="{{ doc.id }}">{{ doc.document_number or doc.title }} — {{ doc.title }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit">Load document</button>
+</form>
+{% endif %}
+
+<form method="post" action="{{ url_for('admin.action_prepare', kind=kind, scope_id=scope_id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% if document %}<input type="hidden" name="document_id" value="{{ document.id }}">{% endif %}
+    {% if project %}<input type="hidden" name="project_id" value="{{ project.id }}">{% endif %}
+    {% if invoice %}<input type="hidden" name="invoice_id" value="{{ invoice.id }}">{% endif %}
+    <div class="field">
+        <label for="ac-purpose">Purpose — why are you contacting them?</label>
+        <select id="ac-purpose" name="purpose">
+            {% for value, label in purposes %}
+            <option value="{{ value }}" {% if value == purpose %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="field">
+        <label for="ac-channel">Channel</label>
+        <select id="ac-channel" name="channel">
+            {% for value, label in channels %}
+            <option value="{{ value }}" {% if value == channel %}selected{% endif %}>{{ label }}{% if value in ('WHATSAPP', 'SMS') and not has_phone %} (no phone recorded){% endif %}{% if value == 'EMAIL' and not has_email %} (no email recorded){% endif %}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="field">
+        <label for="ac-message">Message — editable before anything happens</label>
+        <textarea id="ac-message" name="message" rows="6" maxlength="2000">{{ prefill }}</textarea>
+    </div>
+    <div class="field">
+        <label for="ac-scheduled">Schedule follow-up (optional)</label>
+        <input id="ac-scheduled" name="scheduled_at" type="datetime-local">
+    </div>
+    <button type="submit">Prepare action</button>
+</form>
+<p class="card-meta">Preparing records the action as <em>prepared</em> and shows you a confirmation with the channel link. Nothing is sent from here; you open the app and press send yourself.</p>
+<p>
+    {% if kind == 'client' %}<a href="{{ url_for('admin.client_detail', client_id=scope_id) }}">Back to client</a>
+    {% else %}<a href="{{ url_for('admin.lead_detail', lead_id=scope_id) }}">Back to lead</a>{% endif %}
+</p>
+{% endblock %}

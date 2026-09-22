@@ -1,0 +1,30 @@
+# Environment / secrets
+.env
+.env.*
+
+# Flask instance data (local SQLite DB, etc.)
+instance/
+
+# Uploaded vault media (runtime deployment data, directory auto-created).
+# NOTE: ephemeral hosting filesystems (e.g. Render free tier) wipe this
+# directory on redeploy — use EXTERNAL_URL assets for anything permanent.
+app/static/uploads/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Testing / tooling
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

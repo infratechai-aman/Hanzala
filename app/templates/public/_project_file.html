@@ -1,0 +1,45 @@
+{# Editorial case file. Expects `project` and `file_number` in context.
+   Number quiet, title dominant, question highlighted, next small,
+   proof as direct actions. Borders only as separators. #}
+{% set is_rd = project.category and project.category.slug == 'r-and-d' %}
+{% if project.slug == 'clh-wp' %}
+{% set rd_descriptor = 'Lead discovery + Qualification' %}
+{% elif project.slug == 'autonomous-economic-agent' %}
+{% set rd_descriptor = 'Decision systems + Risk' %}
+{% else %}
+{% set rd_descriptor = project.short_description %}
+{% endif %}
+<article class="file{% if is_rd %} file-rd{% endif %}">
+    <span class="file-number" aria-hidden="true">{{ '%02d' % file_number }}</span>
+    <div class="file-body">
+        <p class="file-meta">
+            <span class="chip chip-{{ project.status|lower|replace('&', '') }}">{{ project.status }}</span>
+            {% if project.category %}<span>{{ project.category.name }}</span>{% endif %}
+            {% if project.role %}<span>Role: {{ project.role }}</span>{% endif %}
+        </p>
+        <h3 class="file-title"><a href="{{ url_for('public.project_detail', slug=project.slug) }}">{{ project.title }}</a></h3>
+        {% if project.short_description %}<p class="file-dek">{{ project.short_description }}</p>{% endif %}
+        {% if is_rd and project.problem %}
+        <p class="file-note"><strong>Question:</strong> {{ project.problem|truncate(200) }}</p>
+        {% endif %}
+        {% if project.next_steps %}
+        <p class="file-next">Next: {{ project.next_steps|truncate(140) }}</p>
+        {% endif %}
+        <p class="file-proof">
+            {% for link in project.links %}
+            {% if link.link_type == 'demo' %}<a href="{{ link.url }}" target="_blank" rel="noopener noreferrer">Open live demo &nearr;</a>
+            {% elif link.link_type == 'code' %}<a href="{{ link.url }}" target="_blank" rel="noopener noreferrer">View source &nearr;</a>
+            {% else %}<a href="{{ link.url }}" target="_blank" rel="noopener noreferrer">{{ link.label }} &nearr;</a>
+            {% endif %}
+            {% endfor %}
+            <a href="{{ url_for('public.project_detail', slug=project.slug) }}">Case file &rarr;</a>
+        </p>
+    </div>
+    {% if is_rd %}
+    <div class="card-thumb" aria-hidden="true">
+        <span class="card-thumb-title">{{ project.title }}</span>
+        <span class="card-thumb-sub">{{ rd_descriptor }}</span>
+        <span class="card-thumb-status">R&amp;D / {{ project.status }}</span>
+    </div>
+    {% endif %}
+</article>

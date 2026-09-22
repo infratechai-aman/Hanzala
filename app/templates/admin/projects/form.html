@@ -1,0 +1,64 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{% if project %}Edit {{ project.title }}{% else %}New project{% endif %}{% endblock %}
+
+{% block content %}
+<h1>{% if project %}Edit project{% else %}New project{% endif %}</h1>
+<form method="post" action="{% if project %}{{ url_for('admin.project_edit', project_id=project.id) }}{% else %}{{ url_for('admin.project_new') }}{% endif %}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="field">
+        <label for="title">Title *</label>
+        <input id="title" name="title" type="text" value="{{ form.title }}" required maxlength="200">
+        {% if errors.title %}<p class="field-error">{{ errors.title }}</p>{% endif %}
+    </div>
+
+    <div class="field">
+        <label for="slug">Slug *</label>
+        <input id="slug" name="slug" type="text" value="{{ form.slug }}" required maxlength="220">
+        {% if errors.slug %}<p class="field-error">{{ errors.slug }}</p>{% endif %}
+    </div>
+
+    <div class="field">
+        <label for="status">Status *</label>
+        <input id="status" name="status" type="text" value="{{ form.status }}" required maxlength="20" list="status-suggestions">
+        <datalist id="status-suggestions">
+            {% for suggestion in status_suggestions %}
+            <option value="{{ suggestion }}"></option>
+            {% endfor %}
+        </datalist>
+        {% if errors.status %}<p class="field-error">{{ errors.status }}</p>{% endif %}
+    </div>
+
+    <div class="field">
+        <label for="category_id">Category</label>
+        <select id="category_id" name="category_id">
+            <option value="">None</option>
+            {% for category in categories %}
+            <option value="{{ category.id }}" {% if form.category_id == category.id|string %}selected{% endif %}>{{ category.name }}</option>
+            {% endfor %}
+        </select>
+        {% if errors.category_id %}<p class="field-error">{{ errors.category_id }}</p>{% endif %}
+    </div>
+
+    <div class="field field-inline">
+        <input id="is_featured" name="is_featured" type="checkbox" {% if form.is_featured %}checked{% endif %}>
+        <label for="is_featured">Featured</label>
+    </div>
+
+    <div class="field">
+        <label for="display_order">Display order</label>
+        <input id="display_order" name="display_order" type="number" step="1" value="{{ form.display_order }}">
+        {% if errors.display_order %}<p class="field-error">{{ errors.display_order }}</p>{% endif %}
+    </div>
+
+    {% for field in ["short_description", "description", "role", "problem", "why", "system_description", "technical_details", "decisions", "result", "proof", "learning", "limitations", "next_steps"] %}
+    <div class="field">
+        <label for="{{ field }}">{{ field.replace("_", " ") }}</label>
+        <textarea id="{{ field }}" name="{{ field }}" rows="4">{{ form[field] }}</textarea>
+    </div>
+    {% endfor %}
+
+    <button type="submit">{% if project %}Save changes{% else %}Create project{% endif %}</button>
+</form>
+{% endblock %}

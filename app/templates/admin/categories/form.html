@@ -1,0 +1,25 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{% if category %}Edit {{ category.name }}{% else %}New category{% endif %}{% endblock %}
+
+{% block content %}
+<h1>{% if category %}Edit category{% else %}New category{% endif %}</h1>
+<form method="post" action="{% if category %}{{ url_for('admin.category_edit', category_id=category.id) }}{% else %}{{ url_for('admin.category_new') }}{% endif %}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="field">
+        <label for="name">Name *</label>
+        <input id="name" name="name" type="text" value="{{ form.name }}" required maxlength="80">
+        {% if errors.name %}<p class="field-error">{{ errors.name }}</p>{% endif %}
+    </div>
+    <div class="field">
+        <label for="slug">Slug *</label>
+        <input id="slug" name="slug" type="text" value="{{ form.slug }}" required maxlength="100">
+        {% if errors.slug %}<p class="field-error">{{ errors.slug }}</p>{% endif %}
+    </div>
+    <div class="field">
+        <label for="description">Description</label>
+        <textarea id="description" name="description" rows="4">{{ form.description }}</textarea>
+    </div>
+    <button type="submit">{% if category %}Save changes{% else %}Create category{% endif %}</button>
+</form>
+{% endblock %}

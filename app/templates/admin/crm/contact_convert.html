@@ -1,0 +1,37 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Convert to lead — {{ contact.name }}{% endblock %}
+
+{% block content %}
+<h1>Convert to lead</h1>
+<p><a href="{{ url_for('admin.contact_detail', contact_id=contact.id) }}">Back to contact</a></p>
+
+<h2>Contact on file</h2>
+<dl class="detail">
+    <div><dt>Name</dt><dd>{{ contact.name }}</dd></div>
+    <div><dt>Email</dt><dd>{{ contact.email }}</dd></div>
+    <div><dt>Phone</dt><dd>{{ contact.phone or '—' }}</dd></div>
+    <div><dt>Company</dt><dd>{{ contact.company or '—' }}</dd></div>
+    <div><dt>Inquiry</dt><dd>{{ contact.message or '—' }}</dd></div>
+    <div><dt>Source</dt><dd>{{ contact.source or '—' }}</dd></div>
+</dl>
+
+<h2>Lead details</h2>
+<form method="post" action="{{ url_for('admin.contact_convert', contact_id=contact.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="field">
+        <label for="service_interest">Service interest</label>
+        <input id="service_interest" name="service_interest" type="text" maxlength="200" placeholder="e.g. Small business website">
+    </div>
+    <div class="field">
+        <label for="estimated_value">Estimated value (optional)</label>
+        <input id="estimated_value" name="estimated_value" type="text" inputmode="decimal" placeholder="0.00">
+    </div>
+    <div class="field">
+        <label for="note">Initial note (optional)</label>
+        <textarea id="note" name="note" rows="2" maxlength="5000"></textarea>
+    </div>
+    <button type="submit">Create lead</button>
+</form>
+<p class="card-meta">The contact record is preserved. If this contact already has a lead, you will be taken to it instead — no duplicates.</p>
+{% endblock %}

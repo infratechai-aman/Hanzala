@@ -1,0 +1,119 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{% if item %}Media — {{ item.title }}{% else %}New media{% endif %}{% endblock %}
+
+{% block content %}
+{% if item %}
+<h1>Media: {{ item.title }}</h1>
+{% else %}
+<h1>New media</h1>
+{% endif %}
+<p><a href="{{ url_for('admin.vault_list') }}">Back to vault</a></p>
+
+{% if item %}
+<h2>Preview</h2>
+{% if item.media_type == 'IMAGE' and item.storage == 'LOCAL' %}
+<img src="{{ url_for('static', filename=item.location) }}" alt="{{ item.alt_text or item.title }}" loading="lazy" style="max-width: 100%;">
+{% elif item.media_type == 'VIDEO' and item.storage == 'LOCAL' %}
+<video controls preload="metadata" style="max-width: 100%;"{% if item.poster %} poster="{{ item.poster }}"{% endif %} aria-label="{{ item.alt_text or item.title }}">
+    <source src="{{ url_for('static', filename=item.location) }}">
+</video>
+{% elif item.media_type == 'PDF' %}
+<p><a href="{{ item.location if item.storage == 'EXTERNAL' else url_for('static', filename=item.location) }}" target="_blank" rel="noopener">Open PDF document</a> <span class="card-meta">(PDFs open as documents, never inline-rendered here.)</span></p>
+{% else %}
+<p><a href="{{ item.location }}" target="_blank" rel="noopener">Open external URL</a> <span class="card-meta">(external asset)</span></p>
+{% endif %}
+{% endif %}
+
+<h2>{% if item %}Edit{% else %}Details{% endif %}</h2>
+<form method="post" {% if item %}action="{{ url_for('admin.vault_edit', media_id=item.id) }}"{% else %}action="{{ url_for('admin.vault_new') }}"{% endif %} enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="field">
+        <label for="title">Title</label>
+        <input id="title" name="title" type="text" value="{{ form.title }}" maxlength="200" required>
+        {% if errors.title %}<p class="field-error">{{ errors.title }}</p>{% endif %}
+    </div>
+    <div class="field">
+        <label for="media_type">Media type</label>
+        <select id="media_type" name="media_type">
+            {% for value in media_types %}
+            <option value="{{ value }}" {% if value == form.media_type %}selected{% endif %}>{{ value }}</option>
+            {% endfor %}
+        </select>
+        {% if errors.media_type %}<p class="field-error">{{ errors.media_type }}</p>{% endif %}
+    </div>
+    <div class="field">
+        <label for="source">Source</label>
+        <select id="source" name="source">
+            <option value="upload" {% if form.source == 'upload' %}selected{% endif %}>File upload (stored locally)</option>
+            <option value="external" {% if form.source == 'external' %}selected{% endif %}>External URL</option>
+        </select>
+    </div>
+    <div class="field">
+        <label for="file">File (jpg/jpeg/png/webp · mp4/webm/mov · pdf — max 25 MB)</label>
+        <input id="file" name="file" type="file">
+        {% if errors.file %}<p class="field-error">{{ errors.file }}</p>{% endif %}
+    </div>
+    <div class="field">
+        <label for="external_url">External URL (for EXTERNAL_URL type or external source)</label>
+        <input id="external_url" name="external_url" type="url" value="{{ form.external_url }}" maxlength="2000" placeholder="https://…">
+        {% if errors.external_url %}<p class="field-error">{{ errors.external_url }}</p>{% endif %}
+    </div>
+    <div class="field">
+        <label for="caption">Caption / description</label>
+        <textarea id="caption" name="caption" rows="2">{{ form.caption }}</textarea>
+    </div>
+    <div class="field">
+        <label for="alt_text">Alt text (images)</label>
+        <input id="alt_text" name="alt_text" type="text" value="{{ form.alt_text }}" maxlength="255">
+        {% if errors.alt_text %}<p class="field-error">{{ errors.alt_text }}</p>{% endif %}
+    </div>
+    <div class="field">
+        <label for="poster">Poster URL (video, optional http(s) URL)</label>
+        <input id="poster" name="poster" type="url" value="{{ form.poster }}" maxlength="2000" placeholder="https://…">
+        {% if errors.poster %}<p class="field-error">{{ errors.poster }}</p>{% endif %}
+    </div>
+    <div class="field">
+        <label for="context">Placement context</label>
+        <select id="context" name="context">
+            {% for value in contexts %}
+            <option value="{{ value }}" {% if value == form.context %}selected{% endif %}>{{ value }}</option>
+            {% endfor %}
+        </select>
+        {% if errors.context %}<p class="field-error">{{ errors.context }}</p>{% endif %}
+    </div>
+    <div class="field">
+        <label for="project_id">Project (required only for PROJECT context)</label>
+        <select id="project_id" name="project_id">
+            <option value="">—</option>
+            {% for project in projects %}
+            <option value="{{ project.id }}" {% if form.project_id == project.id|string %}selected{% endif %}>{{ project.title }}</option>
+            {% endfor %}
+        </select>
+        {% if errors.project_id %}<p class="field-error">{{ errors.project_id }}</p>{% endif %}
+    </div>
+    <div class="field">
+        <label for="visibility">Visibility (only PUBLISHED appears publicly)</label>
+        <select id="visibility" name="visibility">
+            {% for value in visibilities %}
+            <option value="{{ value }}" {% if value == form.visibility %}selected{% endif %}>{{ value }}</option>
+            {% endfor %}
+        </select>
+        {% if errors.visibility %}<p class="field-error">{{ errors.visibility }}</p>{% endif %}
+    </div>
+    <div class="field">
+        <label for="display_order">Display order (lower first)</label>
+        <input id="display_order" name="display_order" type="number" value="{{ form.display_order }}" min="0" max="9999">
+        {% if errors.display_order %}<p class="field-error">{{ errors.display_order }}</p>{% endif %}
+    </div>
+    <button type="submit">{% if item %}Save media{% else %}Create media{% endif %}</button>
+</form>
+
+{% if item %}
+<h2>Delete</h2>
+<form method="post" action="{{ url_for('admin.vault_delete', media_id=item.id) }}" onsubmit="return confirm('Delete this media item? Its stored file is removed too.');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="danger">Delete media</button>
+</form>
+{% endif %}
+{% endblock %}

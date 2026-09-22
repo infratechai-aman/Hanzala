@@ -1,0 +1,132 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Contact — {{ contact.name }}{% endblock %}
+
+{% block content %}
+<h1>Contact: {{ contact.name }}</h1>
+<p><a href="{{ url_for('admin.contact_list') }}">Back to contacts</a></p>
+
+<p><span class="pill pill-{{ state|lower }}">{{ state }}</span>
+<span class="card-meta">Current state — derived from linked leads and clients, never edited by hand.</span></p>
+
+<div class="ledger-actions">
+    {% if action_links.tel %}<a class="button" href="{{ action_links.tel }}">Call</a>{% endif %}
+    {% if wa_url %}<a class="button" href="{{ wa_url }}" target="_blank" rel="noopener">Open WhatsApp</a>{% endif %}
+    {% if mail_url %}<a class="button" href="{{ mail_url }}">Open Email</a>{% endif %}
+    {% if not contact.leads and not contact.clients %}
+    <a class="button" href="{{ url_for('admin.contact_convert', contact_id=contact.id) }}">Convert to Lead</a>
+    {% endif %}
+    {% for lead in contact.leads %}
+    <a class="button" href="{{ url_for('admin.lead_detail', lead_id=lead.id) }}">View Lead #{{ lead.id }}</a>
+    {% endfor %}
+    {% for client in contact.clients %}
+    <a class="button" href="{{ url_for('admin.client_detail', client_id=client.id) }}">View Client</a>
+    {% endfor %}
+</div>
+<p class="card-meta">External links open the device app with details filled in — the browser cannot verify delivery, so nothing here is recorded as sent.</p>
+
+<h2>Inquiry</h2>
+<div class="inline-form">
+    <p>{{ contact.message or '—' }}</p>
+</div>
+
+<h2>Contact information</h2>
+<dl class="detail">
+    <div><dt>Name</dt><dd>{{ contact.name }}</dd></div>
+    <div><dt>Email</dt><dd>{{ contact.email }}</dd></div>
+    <div><dt>Phone</dt><dd>{{ contact.phone or '—' }}</dd></div>
+    <div><dt>Company</dt><dd>{{ contact.company or '—' }}</dd></div>
+    <div><dt>Source</dt><dd>{{ contact.source or '—' }}</dd></div>
+    <div><dt>Created</dt><dd>{{ contact.created_at.strftime('%Y-%m-%d %H:%M') }}</dd></div>
+</dl>
+
+<h2 id="contact-edit">Edit contact</h2>
+<form method="post" action="{{ url_for('admin.contact_update', contact_id=contact.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="field">
+        <label for="ce-name">Name</label>
+        <input id="ce-name" name="name" type="text" value="{{ contact.name }}" maxlength="120" required>
+    </div>
+    <div class="field">
+        <label for="ce-email">Email</label>
+        <input id="ce-email" name="email" type="email" value="{{ contact.email }}" maxlength="255" required>
+    </div>
+    <div class="field">
+        <label for="ce-phone">Phone</label>
+        <input id="ce-phone" name="phone" type="text" value="{{ contact.phone or '' }}" maxlength="50">
+    </div>
+    <div class="field">
+        <label for="ce-company">Company</label>
+        <input id="ce-company" name="company" type="text" value="{{ contact.company or '' }}" maxlength="200">
+    </div>
+    <div class="field">
+        <label for="ce-message">Message</label>
+        <textarea id="ce-message" name="message" rows="3" maxlength="5000">{{ contact.message or '' }}</textarea>
+    </div>
+    <div class="field">
+        <label for="ce-source">Source</label>
+        <input id="ce-source" name="source" type="text" value="{{ contact.source or '' }}" maxlength="100">
+    </div>
+    <button type="submit">Save contact</button>
+</form>
+
+<h2>Lead status</h2>
+{% if contact.leads %}
+{% for lead in contact.leads %}
+<div class="inline-form">
+    <p><a href="{{ url_for('admin.lead_detail', lead_id=lead.id) }}">Lead #{{ lead.id }}</a> — <span class="pill pill-{{ lead.status|lower }}">{{ lead.status }}</span> {% if lead.service_interest %}— {{ lead.service_interest }}{% endif %}</p>
+    <form method="post" action="{{ url_for('admin.lead_update', lead_id=lead.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="next" value="{{ url_for('admin.contact_detail', contact_id=contact.id) }}">
+        <input type="hidden" name="service_interest" value="{{ lead.service_interest or '' }}">
+        <input type="hidden" name="estimated_value" value="{{ lead.estimated_value if lead.estimated_value is not none else '' }}">
+        <div class="field">
+            <label for="lead-status-{{ lead.id }}">Status</label>
+            <select id="lead-status-{{ lead.id }}" name="status">
+                {% for s in lead_statuses %}
+                <option value="{{ s }}" {% if s == lead.status %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit">Change status</button>
+    </form>
+    {% if lead.status != 'CLIENT' and not contact.clients %}
+    <p class="card-meta">Choosing CLIENT creates the client record (existing conversion, never duplicated).</p>
+    {% endif %}
+</div>
+{% endfor %}
+{% else %}
+<p>No leads for this contact. <a href="{{ url_for('admin.contact_convert', contact_id=contact.id) }}">Convert to lead</a></p>
+{% endif %}
+
+{% if contact.clients %}
+<h2>Client</h2>
+<ul>
+    {% for client in contact.clients %}
+    <li><a href="{{ url_for('admin.client_detail', client_id=client.id) }}">{{ client.company or 'Client #' ~ client.id }}</a> — {{ client.notes or 'no notes' }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+<h2>Notes ({{ contact.notes|length }})</h2>
+{% if contact.notes %}
+{% for note in contact.notes|sort(attribute='created_at', reverse=true) %}
+<div class="inline-form">
+    <p>{{ note.content }}</p>
+    <p class="card-meta">{{ note.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+</div>
+{% endfor %}
+{% else %}
+<p>No notes for this contact.</p>
+{% endif %}
+
+<h2>Delete contact</h2>
+{% if contact.leads or contact.clients or contact.notes %}
+<p class="card-meta">Deletion is blocked while this contact has linked leads, clients, or notes — CRM history is never silently destroyed.</p>
+{% else %}
+<form method="post" action="{{ url_for('admin.contact_delete', contact_id=contact.id) }}" onsubmit="return confirm('Delete this contact? It has no linked records.');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="danger">Delete contact</button>
+</form>
+{% endif %}
+{% endblock %}

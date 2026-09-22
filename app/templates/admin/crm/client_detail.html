@@ -1,0 +1,464 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Client — {{ client.contact.name }}{% endblock %}
+
+{% block content %}
+<h1>Client: {{ client.contact.name }}</h1>
+<p><a href="{{ url_for('admin.contact_detail', contact_id=client.contact_id) }}">Back to contact</a> · <a href="{{ url_for('admin.crm_dashboard') }}">CRM</a></p>
+
+<h2>Client</h2>
+<dl class="detail">
+    <div><dt>Name</dt><dd>{{ client.contact.name }}</dd></div>
+    <div><dt>Company</dt><dd>{{ client.company or client.contact.company or '—' }}</dd></div>
+    <div><dt>Email</dt><dd>{{ client.contact.email }}</dd></div>
+    <div><dt>Phone</dt><dd>{{ client.contact.phone or '—' }}</dd></div>
+    <div><dt>Client since</dt><dd>{{ client.created_at.strftime('%Y-%m-%d') }}</dd></div>
+</dl>
+
+<h2>Service</h2>
+{% if client.contact.leads %}
+<ul>
+    {% for lead in client.contact.leads %}
+    <li><a href="{{ url_for('admin.lead_detail', lead_id=lead.id) }}">Lead #{{ lead.id }}</a> — {{ lead.service_interest or 'no service recorded' }} <span class="pill pill-{{ lead.status|lower }}">{{ lead.status }}</span></li>
+    {% endfor %}
+</ul>
+{% else %}
+<p>No linked leads.</p>
+{% endif %}
+
+<h2>Communication</h2>
+<dl class="detail">
+    <div><dt>Last contacted</dt><dd>{% for lead in client.contact.leads %}{% if lead.last_contacted_at %}{{ lead.last_contacted_at.strftime('%Y-%m-%d %H:%M') }}{% endif %}{% else %}—{% endfor %}</dd></div>
+    <div><dt>Next follow-up</dt><dd>{% if next_followup %}{{ next_followup.scheduled_at.strftime('%Y-%m-%d %H:%M') if next_followup.scheduled_at else 'Unscheduled' }}{% if next_followup.note %} — {{ next_followup.note }}{% endif %}{% else %}None open{% endif %}</dd></div>
+</dl>
+{% if client.contact.leads %}
+<p>
+    {% for lead in client.contact.leads %}
+    <a class="button" href="{{ url_for('admin.lead_detail', lead_id=lead.id) }}">Contact / follow up (Lead #{{ lead.id }})</a>
+    {% endfor %}
+</p>
+{% endif %}
+
+{% set contact = client.contact %}
+{% set scope = 'client' %}
+{% set scope_id = client.id %}
+{% include "admin/crm/_action_center.html" %}
+
+<h2>Projects</h2>
+{% for project in projects %}
+<div class="inline-form">
+    <h3>{{ project.name }} <span class="pill pill-{{ project.status|lower }}">{{ project.status }}</span></h3>
+    <p class="card-meta">Start: {{ project.start_date or '—' }} · Due: {{ project.due_date or '—' }} · <a href="{{ url_for('admin.action_compose', kind='client', scope_id=client.id, project_id=project.id, purpose='PROJECT_UPDATE') }}">Message about this project</a></p>
+    <form method="post" action="{{ url_for('admin.work_project_update', project_id=project.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="field">
+            <label for="pname-{{ project.id }}">Project name</label>
+            <input id="pname-{{ project.id }}" name="name" type="text" value="{{ project.name }}" maxlength="200" required>
+        </div>
+        <div class="field">
+            <label for="pstatus-{{ project.id }}">Status</label>
+            <select id="pstatus-{{ project.id }}" name="status">
+                {% for s in project_statuses %}
+                <option value="{{ s }}" {% if s == project.status %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="field">
+            <label for="pstart-{{ project.id }}">Start date</label>
+            <input id="pstart-{{ project.id }}" name="start_date" type="date" value="{{ project.start_date or '' }}">
+        </div>
+        <div class="field">
+            <label for="pdue-{{ project.id }}">Due date</label>
+            <input id="pdue-{{ project.id }}" name="due_date" type="date" value="{{ project.due_date or '' }}">
+        </div>
+        <button type="submit">Save project</button>
+    </form>
+
+    <h4>Milestones</h4>
+    {% for m in project.milestones %}
+    <div class="inline-form">
+        <p><strong>{{ m.name }}</strong> <span class="pill pill-{{ m.status|lower }}">{{ m.status }}</span>{% if m.due_date %} · due {{ m.due_date }}{% endif %}{% if m.description %} — {{ m.description }}{% endif %}</p>
+        <form method="post" action="{{ url_for('admin.milestone_update', milestone_id=m.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="field">
+                <label for="mstatus-{{ m.id }}">Status</label>
+                <select id="mstatus-{{ m.id }}" name="status">
+                    {% for s in ('PLANNED', 'IN_PROGRESS', 'COMPLETED', 'BLOCKED') %}
+                    <option value="{{ s }}" {% if s == m.status %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="field">
+                <label for="mdue-{{ m.id }}">Due date</label>
+                <input id="mdue-{{ m.id }}" name="due_date" type="date" value="{{ m.due_date or '' }}">
+            </div>
+            <button type="submit">Update milestone</button>
+        </form>
+    </div>
+    {% else %}
+    <p>No milestones yet.</p>
+    {% endfor %}
+    <form method="post" action="{{ url_for('admin.milestone_create', project_id=project.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="field">
+            <label for="mname-{{ project.id }}">New milestone</label>
+            <input id="mname-{{ project.id }}" name="name" type="text" maxlength="200" required>
+        </div>
+        <div class="field">
+            <label for="mdesc-{{ project.id }}">Description</label>
+            <textarea id="mdesc-{{ project.id }}" name="description" rows="2"></textarea>
+        </div>
+        <div class="field">
+            <label for="mddue-{{ project.id }}">Due date</label>
+            <input id="mddue-{{ project.id }}" name="due_date" type="date">
+        </div>
+        <button type="submit">Add milestone</button>
+    </form>
+
+    <h4>Deliverables</h4>
+    {% for d in project.deliverables %}
+    <div class="inline-form">
+        <p><strong>{{ d.name }}</strong> <span class="pill pill-{{ d.status|lower }}">{{ d.status }}</span>{% if d.description %} — {{ d.description }}{% endif %}</p>
+        <form method="post" action="{{ url_for('admin.deliverable_update', deliverable_id=d.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="field">
+                <label for="dstatus-{{ d.id }}">Status</label>
+                <select id="dstatus-{{ d.id }}" name="status">
+                    {% for s in ('PENDING', 'DELIVERED', 'ACCEPTED', 'REJECTED') %}
+                    <option value="{{ s }}" {% if s == d.status %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit">Update deliverable</button>
+        </form>
+    </div>
+    {% else %}
+    <p>No deliverables yet.</p>
+    {% endfor %}
+    <form method="post" action="{{ url_for('admin.deliverable_create', project_id=project.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="field">
+            <label for="dname-{{ project.id }}">New deliverable</label>
+            <input id="dname-{{ project.id }}" name="name" type="text" maxlength="200" required>
+        </div>
+        <div class="field">
+            <label for="ddesc-{{ project.id }}">Description</label>
+            <textarea id="ddesc-{{ project.id }}" name="description" rows="2"></textarea>
+        </div>
+        <button type="submit">Add deliverable</button>
+    </form>
+
+    <h4>Revision requests</h4>
+    {% for r in project.revisions %}
+    <div class="inline-form">
+        <p><strong>Revision #{{ r.id }}</strong> <span class="pill pill-{{ r.status|lower }}">{{ r.status }}</span> — {{ r.description }}</p>
+        <form method="post" action="{{ url_for('admin.revision_update', revision_id=r.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="field">
+                <label for="rstatus-{{ r.id }}">Status</label>
+                <select id="rstatus-{{ r.id }}" name="status">
+                    {% for s in ('OPEN', 'IN_PROGRESS', 'COMPLETED', 'REJECTED') %}
+                    <option value="{{ s }}" {% if s == r.status %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit">Update revision</button>
+        </form>
+    </div>
+    {% else %}
+    <p>No revision requests.</p>
+    {% endfor %}
+    <form method="post" action="{{ url_for('admin.revision_create', project_id=project.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="field">
+            <label for="rdesc-{{ project.id }}">New revision request</label>
+            <textarea id="rdesc-{{ project.id }}" name="description" rows="2" required></textarea>
+        </div>
+        <button type="submit">Add revision request</button>
+    </form>
+
+    <h4>Acceptance / sign-off</h4>
+    {% for a in project.acceptances %}
+    <div class="inline-form">
+        <p><strong>{{ a.acceptance_type }}</strong> <span class="pill pill-{{ a.status|lower }}">{{ a.status }}</span>{% if a.client_name %} — {{ a.client_name }}{% endif %}{% if a.notes %} — {{ a.notes }}{% endif %}</p>
+        <form method="post" action="{{ url_for('admin.acceptance_update', acceptance_id=a.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="field">
+                <label for="astatus-{{ a.id }}">Status</label>
+                <select id="astatus-{{ a.id }}" name="status">
+                    {% for s in ('PENDING', 'ACCEPTED', 'REJECTED') %}
+                    <option value="{{ s }}" {% if s == a.status %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit">Update acceptance</button>
+        </form>
+    </div>
+    {% else %}
+    <p>No acceptance records yet.</p>
+    {% endfor %}
+    <form method="post" action="{{ url_for('admin.acceptance_create', project_id=project.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="field">
+            <label for="atype-{{ project.id }}">Acceptance type</label>
+            <select id="atype-{{ project.id }}" name="acceptance_type">
+                {% for t in ('DELIVERABLE_ACCEPTANCE', 'PROJECT_COMPLETION', 'FINAL_SIGN_OFF') %}
+                <option value="{{ t }}">{{ t }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="field">
+            <label for="adel-{{ project.id }}">Deliverable (optional)</label>
+            <select id="adel-{{ project.id }}" name="deliverable_id">
+                <option value="">—</option>
+                {% for d in project.deliverables %}
+                <option value="{{ d.id }}">{{ d.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="field">
+            <label for="aname-{{ project.id }}">Client name</label>
+            <input id="aname-{{ project.id }}" name="client_name" type="text" maxlength="200" value="{{ client.contact.name }}">
+        </div>
+        <div class="field">
+            <label for="anotes-{{ project.id }}">Notes</label>
+            <textarea id="anotes-{{ project.id }}" name="notes" rows="2"></textarea>
+        </div>
+        <button type="submit">Record acceptance</button>
+    </form>
+</div>
+{% else %}
+<p>No work projects yet.</p>
+{% endfor %}
+<h3>New project</h3>
+<form method="post" action="{{ url_for('admin.work_project_create', client_id=client.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="field">
+        <label for="new-pname">Project name</label>
+        <input id="new-pname" name="name" type="text" maxlength="200" required>
+    </div>
+    <div class="field">
+        <label for="new-pstatus">Status</label>
+        <select id="new-pstatus" name="status">
+            {% for s in project_statuses %}
+            <option value="{{ s }}">{{ s }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="field">
+        <label for="new-pstart">Start date</label>
+        <input id="new-pstart" name="start_date" type="date">
+    </div>
+    <div class="field">
+        <label for="new-pdue">Due date</label>
+        <input id="new-pdue" name="due_date" type="date">
+    </div>
+    <button type="submit">Create project</button>
+</form>
+
+<h2>Commercial records</h2>
+{% for doc in documents %}
+<div class="inline-form">
+    <p><strong>{{ doc.document_number or ('#' ~ doc.id) }}</strong> — {{ doc.title }} <span class="pill pill-{{ doc.status|lower }}">{{ doc.status }}</span></p>
+    <p class="card-meta">{{ doc.doc_type or '—' }}{% if doc.project_id %} · project #{{ doc.project_id }}{% endif %}</p>
+    {% with document=doc, project=projects|selectattr('id', 'equalto', doc.project_id)|first, sendable=is_sendable(doc.doc_type) %}
+    {% include "admin/documents/_doc_actions.html" %}
+    {% endwith %}
+    {% for v in doc.versions %}
+    <div class="inline-form">
+        <p>v{{ v.version_number }} — {{ v.status }} <span class="card-meta">({{ v.created_at.strftime('%Y-%m-%d %H:%M') }})</span></p>
+        {% for ap in v.approvals %}
+        <p>{{ ap.approval_type }}: <strong>{{ ap.status }}</strong>{% if ap.approver_name %} — {{ ap.approver_name }}{% endif %}{% if ap.notes %} — {{ ap.notes }}{% endif %}</p>
+        <form method="post" action="{{ url_for('admin.approval_status', approval_id=ap.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="field">
+                <label for="apstat-{{ ap.id }}">Approval status</label>
+                <select id="apstat-{{ ap.id }}" name="status">
+                    {% for s in ('PENDING', 'APPROVED', 'REJECTED', 'REVOKED') %}
+                    <option value="{{ s }}" {% if s == ap.status %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit">Update approval</button>
+        </form>
+        {% endfor %}
+        <form method="post" action="{{ url_for('admin.approval_create', version_id=v.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="field">
+                <label for="aptype-{{ v.id }}">New approval for v{{ v.version_number }}</label>
+                <select id="aptype-{{ v.id }}" name="approval_type">
+                    {% for t in ('DOCUMENT_APPROVAL', 'SCOPE_APPROVAL', 'CLIENT_ACCEPTANCE', 'FINAL_SIGN_OFF') %}
+                    <option value="{{ t }}">{{ t }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="field">
+                <label for="apnewstat-{{ v.id }}">Status</label>
+                <select id="apnewstat-{{ v.id }}" name="status">
+                    {% for s in ('PENDING', 'APPROVED', 'REJECTED', 'REVOKED') %}
+                    <option value="{{ s }}">{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="field">
+                <label for="apname-{{ v.id }}">Approver name</label>
+                <input id="apname-{{ v.id }}" name="approver_name" type="text" maxlength="200">
+            </div>
+            <div class="field">
+                <label for="apnotes-{{ v.id }}">Notes</label>
+                <textarea id="apnotes-{{ v.id }}" name="notes" rows="2"></textarea>
+            </div>
+            <button type="submit">Record approval</button>
+        </form>
+    </div>
+    {% endfor %}
+    <form method="post" action="{{ url_for('admin.document_version_create', document_id=doc.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="field">
+            <label for="vtitle-{{ doc.id }}">New version title</label>
+            <input id="vtitle-{{ doc.id }}" name="title" type="text" maxlength="200" value="{{ doc.title }}">
+        </div>
+        <div class="field">
+            <label for="vdesc-{{ doc.id }}">Description</label>
+            <textarea id="vdesc-{{ doc.id }}" name="description" rows="2">{{ doc.description or '' }}</textarea>
+        </div>
+        <div class="field">
+            <label for="vurl-{{ doc.id }}">URL/path</label>
+            <input id="vurl-{{ doc.id }}" name="url_or_path" type="text" maxlength="2000" value="{{ doc.url_or_path or '' }}">
+        </div>
+        <button type="submit">Save new version</button>
+    </form>
+</div>
+{% else %}
+<p>No commercial records yet.</p>
+{% endfor %}
+<h3>Create commercial record</h3>
+<form method="post" action="{{ url_for('admin.client_document_create', client_id=client.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="field">
+        <label for="doc-kind">Kind</label>
+        <select id="doc-kind" name="kind">
+            {% for value, label, category, doc_type in commercial_kinds %}
+            <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="field">
+        <label for="doc-title">Title</label>
+        <input id="doc-title" name="title" type="text" maxlength="200" required>
+    </div>
+    <div class="field">
+        <label for="doc-desc">Description</label>
+        <textarea id="doc-desc" name="description" rows="2"></textarea>
+    </div>
+    <div class="field">
+        <label for="doc-project">Project (optional)</label>
+        <select id="doc-project" name="project_id">
+            <option value="">—</option>
+            {% for project in projects %}
+            <option value="{{ project.id }}">{{ project.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit">Create document</button>
+</form>
+
+<h2>Finance</h2>
+<dl class="detail">
+    <div><dt>Total invoiced</dt><dd>{{ total_invoiced }}</dd></div>
+    <div><dt>Total paid</dt><dd>{{ total_paid }}</dd></div>
+    <div><dt>Outstanding</dt><dd>{{ outstanding }}</dd></div>
+</dl>
+{% for inv in invoices %}
+<div class="inline-form">
+    <p><strong>{{ inv.invoice_number }}</strong> — {{ inv.amount }} <span class="pill pill-{{ inv.status|lower }}">{{ inv.status }}</span></p>
+    <p class="card-meta">Paid: {{ inv.amount_paid }} · Outstanding: {{ inv.outstanding }}{% if inv.due_at %} · Due: {{ inv.due_at.strftime('%Y-%m-%d %H:%M') }}{% endif %}</p>
+    {% for pay in inv.payments %}
+    <p>{{ pay.payment_date.strftime('%Y-%m-%d') }} — {{ pay.amount }}{% if pay.reference %} ({{ pay.reference }}){% endif %}{% if pay.notes %} — {{ pay.notes }}{% endif %}</p>
+    {% endfor %}
+    <form method="post" action="{{ url_for('admin.payment_create', invoice_id=inv.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="field">
+            <label for="payamt-{{ inv.id }}">Payment amount</label>
+            <input id="payamt-{{ inv.id }}" name="amount" type="text" inputmode="decimal" required>
+        </div>
+        <div class="field">
+            <label for="payref-{{ inv.id }}">Reference</label>
+            <input id="payref-{{ inv.id }}" name="reference" type="text" maxlength="200">
+        </div>
+        <div class="field">
+            <label for="paynotes-{{ inv.id }}">Notes</label>
+            <textarea id="paynotes-{{ inv.id }}" name="notes" rows="2"></textarea>
+        </div>
+        <button type="submit">Record payment</button>
+    </form>
+    <form method="post" action="{{ url_for('admin.invoice_status', invoice_id=inv.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="field">
+            <label for="invstat-{{ inv.id }}">Invoice status</label>
+            <select id="invstat-{{ inv.id }}" name="status">
+                {% for s in invoice_statuses %}
+                <option value="{{ s }}" {% if s == inv.status %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit">Update invoice</button>
+    </form>
+</div>
+{% else %}
+<p>No invoices yet.</p>
+{% endfor %}
+<h3>Create invoice</h3>
+<form method="post" action="{{ url_for('admin.invoice_create', client_id=client.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="field">
+        <label for="inv-amount">Amount</label>
+        <input id="inv-amount" name="amount" type="text" inputmode="decimal" required>
+    </div>
+    <div class="field">
+        <label for="inv-project">Project (optional)</label>
+        <select id="inv-project" name="project_id">
+            <option value="">—</option>
+            {% for project in projects %}
+            <option value="{{ project.id }}">{{ project.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="field">
+        <label for="inv-due">Due at (optional)</label>
+        <input id="inv-due" name="due_at" type="datetime-local">
+    </div>
+    <button type="submit">Create invoice</button>
+</form>
+
+<h2>Notes</h2>
+{% for note in client.client_notes|sort(attribute='created_at', reverse=true) %}
+<div class="inline-form">
+    <p>{{ note.content }}</p>
+    <p class="card-meta">{{ note.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+</div>
+{% else %}
+<p>No notes yet.</p>
+{% endfor %}
+<h3>Add note</h3>
+<form method="post" action="{{ url_for('admin.client_note_create', client_id=client.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="field">
+        <label for="client-note">Note</label>
+        <textarea id="client-note" name="content" rows="3" required></textarea>
+    </div>
+    <button type="submit">Add note</button>
+</form>
+
+<h2>Activity timeline</h2>
+<p class="card-meta">Chronological application activity record. This log shows what the application recorded — it is an internal history, not legal proof.</p>
+{% if events %}
+<ul>
+    {% for e in events %}
+    <li>{{ e.created_at.strftime('%Y-%m-%d %H:%M') }} — {{ e.event_type }}: {{ e.description }}</li>
+    {% endfor %}
+</ul>
+{% else %}
+<p>No activity recorded yet.</p>
+{% endif %}
+{% endblock %}

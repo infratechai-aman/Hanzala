@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Process — Hanzala{% endblock %}
+{% block meta_description %}How Hanzala builds software: a problem-to-rebuild workflow, and an AI workbench with human responsibility.{% endblock %}
+
+{% block content %}
+<h1>Process</h1>
+<p class="lede">Every project follows the same loop. The loop is the point — finishing is just where the current lap ends.</p>
+
+<ol class="pipeline" aria-label="Development workflow">
+    <li>Problem</li>
+    <li>Understand</li>
+    <li>Plan</li>
+    <li>Build</li>
+    <li>Test</li>
+    <li>Break</li>
+    <li>Debug</li>
+    <li>Reverse engineer</li>
+    <li>Understand deeply</li>
+    <li>Rebuild</li>
+</ol>
+
+<section aria-labelledby="workbench-heading">
+    <h2 id="workbench-heading">The AI workbench</h2>
+    <p>AI tooling is part of the workflow: it increases leverage on drafting, searching, and boilerplate.
+        It does not replace technical responsibility. On every build, the human — me — remains responsible for:</p>
+    <ul>
+        <li>directing the work</li>
+        <li>making decisions</li>
+        <li>reviewing output</li>
+        <li>debugging</li>
+        <li>understanding the architecture</li>
+        <li>testing</li>
+        <li>learning</li>
+    </ul>
+    <p>If I cannot explain how something I shipped works, the process failed — no matter how well the output reads.</p>
+</section>
+{% endblock %}

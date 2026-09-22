@@ -1,0 +1,35 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Projects{% endblock %}
+
+{% block content %}
+<h1>Projects</h1>
+<p><a class="button" href="{{ url_for('admin.project_new') }}">New project</a></p>
+{% if projects %}
+<div class="table-wrap">
+<table>
+    <thead>
+        <tr><th scope="col">Title</th><th scope="col">Slug</th><th scope="col">Status</th><th scope="col">Actions</th></tr>
+    </thead>
+    <tbody>
+        {% for project in projects %}
+        <tr>
+            <td><a href="{{ url_for('admin.project_detail', project_id=project.id) }}">{{ project.title }}</a></td>
+            <td>{{ project.slug }}</td>
+            <td><span class="pill pill-{{ project.status|lower|replace('&', '') }}">{{ project.status }}</span></td>
+            <td class="actions">
+                <a href="{{ url_for('admin.project_edit', project_id=project.id) }}">Edit</a>
+                <form method="post" action="{{ url_for('admin.project_delete', project_id=project.id) }}" onsubmit="return confirm('Delete this project?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="danger">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}
+<p>No projects yet.</p>
+{% endif %}
+{% endblock %}

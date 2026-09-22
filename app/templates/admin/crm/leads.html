@@ -1,0 +1,65 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Leads{% endblock %}
+
+{% block content %}
+<h1>Leads</h1>
+<form method="get" action="{{ url_for('admin.lead_list') }}" class="filter-form">
+    <div class="field">
+        <label for="status">Filter by status</label>
+        <select id="status" name="status" onchange="this.form.submit()">
+            <option value="">All</option>
+            {% for status in statuses %}
+            <option value="{{ status }}" {% if status == active_filter %}selected{% endif %}>{{ status }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <noscript><button type="submit">Filter</button></noscript>
+</form>
+
+{% if leads %}
+<div class="table-wrap">
+<table>
+    <thead>
+        <tr>
+            <th scope="col">Name</th><th scope="col">Company</th><th scope="col">Email</th>
+            <th scope="col">Service interest</th><th scope="col">Est. value</th><th scope="col">Status</th>
+            <th scope="col">Created</th><th scope="col">Last contacted</th><th scope="col">Actions</th><th scope="col">Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for lead in leads %}
+        <tr>
+            <td>{{ lead.contact.name }}</td>
+            <td>{{ lead.contact.company or '—' }}</td>
+            <td>{{ lead.contact.email }}</td>
+            <td>{{ lead.service_interest or '—' }}</td>
+            <td>{{ lead.estimated_value if lead.estimated_value is not none else '—' }}</td>
+            <td><span class="pill pill-{{ lead.status|lower }}">{{ lead.status }}</span></td>
+            <td>{{ lead.created_at.strftime('%Y-%m-%d') }}</td>
+            <td>{{ lead.last_contacted_at.strftime('%Y-%m-%d') if lead.last_contacted_at else '—' }}</td>
+            <td><a href="{{ url_for('admin.lead_detail', lead_id=lead.id) }}">Open</a></td>
+            <td>
+                <form method="post" action="{{ url_for('admin.lead_update', lead_id=lead.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="next" value="{{ url_for('admin.lead_list', status=active_filter) if active_filter else url_for('admin.lead_list') }}">
+                    <input type="hidden" name="service_interest" value="{{ lead.service_interest or '' }}">
+                    <input type="hidden" name="estimated_value" value="{{ lead.estimated_value if lead.estimated_value is not none else '' }}">
+                    <label class="card-meta" for="list-status-{{ lead.id }}">Status</label>
+                    <select id="list-status-{{ lead.id }}" name="status">
+                        {% for s in statuses %}
+                        <option value="{{ s }}" {% if s == lead.status %}selected{% endif %}>{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit">Save</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}
+<p>No leads found.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Contact — Hanzala{% endblock %}
+{% block meta_description %}Need something small built? Services Hanzala offers: websites, landing pages, business systems.{% endblock %}
+
+{% block content %}
+<h1>Start a project</h1>
+<p class="lede">This is a project enquiry, not a newsletter signup. Tell me what you are trying to build,
+    what problem it should solve, and what a successful result looks like — I take on small,
+    well-defined web work I can fully understand before writing anything.</p>
+
+<section aria-labelledby="services-heading">
+    <h2 id="services-heading">What you can request</h2>
+    <ul class="example-list">
+        <li>Website — small business website</li>
+        <li>Landing page</li>
+        <li>Business system — lightweight operational tool</li>
+        <li>Lead / enquiry workflow</li>
+        <li>Custom web application</li>
+        <li>Website improvement</li>
+    </ul>
+    <p class="card-meta"><span>Pick the closest match below — the exact scope gets worked out together.</span></p>
+</section>
+
+<section aria-labelledby="reach-heading">
+    <h2 id="reach-heading">Project enquiry</h2>
+    <p>Prefer a direct channel? These are the only ones I monitor:</p>
+    {% include "public/_social.html" %}
+    <form class="enquiry-form" method="post" action="{{ url_for('public.contact') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {# Honeypot field: hidden from humans, catches bots. #}
+        <div class="hp-field" aria-hidden="true">
+            <label for="website">Website</label>
+            <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
+        </div>
+        <div class="field">
+            <label for="name">Name *</label>
+            <input id="name" name="name" type="text" value="{{ form.name }}" required maxlength="120" autocomplete="name">
+            {% if errors.name %}<p class="field-error">{{ errors.name }}</p>{% endif %}
+        </div>
+        <div class="field">
+            <label for="email">Email *</label>
+            <input id="email" name="email" type="email" value="{{ form.email }}" required maxlength="255" autocomplete="email">
+            {% if errors.email %}<p class="field-error">{{ errors.email }}</p>{% endif %}
+        </div>
+        <div class="field">
+            <label for="phone">Phone</label>
+            <input id="phone" name="phone" type="tel" value="{{ form.phone }}" maxlength="50" autocomplete="tel">
+            {% if errors.phone %}<p class="field-error">{{ errors.phone }}</p>{% endif %}
+        </div>
+        <div class="field">
+            <label for="company">Company</label>
+            <input id="company" name="company" type="text" value="{{ form.company }}" maxlength="200" autocomplete="organization">
+            {% if errors.company %}<p class="field-error">{{ errors.company }}</p>{% endif %}
+        </div>
+        <div class="field">
+            <label for="service_interest">Service / project type</label>
+            <select id="service_interest" name="service_interest">
+                <option value="">Select the closest match</option>
+                {% for option in service_options %}
+                <option value="{{ option }}" {% if form.service_interest == option %}selected{% endif %}>{{ option }}</option>
+                {% endfor %}
+            </select>
+            {% if errors.service_interest %}<p class="field-error">{{ errors.service_interest }}</p>{% endif %}
+        </div>
+        <div class="field">
+            <label for="message">Project details *</label>
+            <textarea id="message" name="message" rows="6" required maxlength="5000" placeholder="What are you trying to build, what problem should it solve, and what would a successful result look like?">{{ form.message }}</textarea>
+            {% if errors.message %}<p class="field-error">{{ errors.message }}</p>{% endif %}
+        </div>
+        <div class="field">
+            <label for="source">How did you hear about this site?</label>
+            <input id="source" name="source" type="text" value="{{ form.source }}" maxlength="100">
+            {% if errors.source %}<p class="field-error">{{ errors.source }}</p>{% endif %}
+        </div>
+        <button type="submit">Send project enquiry</button>
+    </form>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div role="status" aria-live="polite">
+        {% for category, message in messages %}
+        <p class="flash flash-{{ category }}">{{ message }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+</section>
+{% endblock %}
