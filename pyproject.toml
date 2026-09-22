@@ -1,2 +1,17 @@
+[project]
+name = "hanzala-portfolio"
+version = "0.1.0"
+description = "Hanzala portfolio application"
+requires-python = ">=3.10"
+dependencies = [
+    "Flask>=3.0",
+    "Flask-SQLAlchemy>=3.1",
+    "Flask-Migrate>=4.0",
+    "Flask-WTF>=1.0",
+    "python-dotenv>=1.0",
+    "gunicorn>=23.0",
+    "psycopg2-binary>=2.9",
+]
+
 [tool.vercel]
 entrypoint = "run:app"

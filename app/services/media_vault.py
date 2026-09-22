@@ -35,7 +35,10 @@ def media_directory():
     only ensures the directory exists.
     """
     path = os.path.abspath(current_app.config["MEDIA_ROOT"])
-    os.makedirs(path, exist_ok=True)
+    try:
+        os.makedirs(path, exist_ok=True)
+    except OSError:
+        pass
     return path
 
 

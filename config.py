@@ -28,10 +28,14 @@ class Config:
 
     # Default to a local SQLite file inside instance/ (Flask's
     # convention for deployment-specific data that stays out of git).
-    SQLALCHEMY_DATABASE_URI = os.getenv(
-        "DATABASE_URL",
-        "sqlite:///" + os.path.join(BASE_DIR, "instance", "app.db"),
-    )
+    _raw_db_url = os.getenv("DATABASE_URL")
+    if _raw_db_url and _raw_db_url.startswith("postgres://"):
+        _raw_db_url = _raw_db_url.replace("postgres://", "postgresql://", 1)
+    if not _raw_db_url:
+        _default_db_dir = "/tmp" if os.getenv("VERCEL") else os.path.join(BASE_DIR, "instance")
+        _raw_db_url = "sqlite:///" + os.path.join(_default_db_dir, "app.db")
+
+    SQLALCHEMY_DATABASE_URI = _raw_db_url
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Persistent media storage root. Uploaded files live here and are
@@ -46,7 +50,7 @@ class Config:
     # assets on ephemeral hosting, prefer remote (http) media instead.
     MEDIA_ROOT = os.getenv(
         "MEDIA_ROOT",
-        os.path.join(BASE_DIR, "app", "static", "uploads", "media"),
+        "/tmp/media" if os.getenv("VERCEL") else os.path.join(BASE_DIR, "app", "static", "uploads", "media"),
     )
 
     # Session cookie hardening. Cookie is never sent over plain HTTP
