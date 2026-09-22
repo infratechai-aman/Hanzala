@@ -10,8 +10,7 @@ dependencies = [
     "Flask-WTF>=1.0",
     "python-dotenv>=1.0",
     "gunicorn>=23.0",
-    "psycopg2-binary>=2.9",
 ]
 
 [tool.vercel]
-entrypoint = "run:app"
+entrypoint = "api/index.py:app"

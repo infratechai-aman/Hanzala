@@ -506,6 +506,17 @@ def seed_portfolio():
         else:
             counts["unchanged"] += 1
 
+    for data in LEARNING_ITEMS:
+        item = LearningItem.query.filter_by(title=data["title"]).first()
+        values = {k: v for k, v in data.items()}
+        if item is None:
+            db.session.add(LearningItem(**values))
+            counts["created"] += 1
+        elif _apply(item, values):
+            counts["updated"] += 1
+        else:
+            counts["unchanged"] += 1
+
     for data in PROJECT_MEDIA:
         project = Project.query.filter_by(slug=data["project_slug"]).first()
         if project is None:

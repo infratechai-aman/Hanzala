@@ -50,8 +50,7 @@ def create_app(config_name="development"):
 
     # After loading config, ensure SECRET_KEY is not the dev fallback in production.
     if config_class is ProductionConfig and app.config.get("SECRET_KEY", DEV_FALLBACK_SECRET) in (None, "", DEV_FALLBACK_SECRET):
-        if os.getenv("VERCEL"):
-            # Use git commit SHA as a stable-ish secret when not explicitly set.
+        if os.getenv("VERCEL") or os.getenv("VERCEL_ENV"):
             app.config["SECRET_KEY"] = os.getenv(
                 "VERCEL_GIT_COMMIT_SHA", os.urandom(24).hex()
             )
@@ -69,20 +68,30 @@ def create_app(config_name="development"):
     app.register_blueprint(public_bp)
     app.register_blueprint(admin_bp)
 
-    # Storage and database initialization
-    with app.app_context():
-        try:
-            from app.services.media_vault import media_directory
-            media_directory()
-        except Exception:
-            pass
+    # Storage and database initialization (skip during testing)
+    if config_name != "testing":
+        with app.app_context():
+            try:
+                from app.services.media_vault import media_directory
+                media_directory()
+            except Exception:
+                pass
 
-        try:
-            db.create_all()
-            from app.seed import seed_portfolio
-            seed_portfolio()
-        except Exception as e:
-            app.logger.warning(f"Database auto-init or seed skipped: {e}")
+            try:
+                db.create_all()
+                from app.seed import seed_portfolio
+                seed_portfolio()
+            except Exception as e:
+                app.logger.warning(f"Database auto-init or seed skipped: {e}")
+
+        @app.before_request
+        def _ensure_db_ready():
+            if not getattr(app, "_db_initialized", False):
+                try:
+                    db.create_all()
+                except Exception:
+                    pass
+                app._db_initialized = True
 
     register_error_handlers(app)
     register_cli_commands(app)

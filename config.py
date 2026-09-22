@@ -32,14 +32,22 @@ class Config:
     if _raw_db_url and _raw_db_url.startswith("postgres://"):
         _raw_db_url = _raw_db_url.replace("postgres://", "postgresql://", 1)
     if not _raw_db_url:
-        if os.getenv("VERCEL"):
-            # On Vercel (Linux), /tmp is the only writable directory.
-            # SQLAlchemy absolute path needs four slashes: sqlite:////tmp/app.db
+        is_serverless = bool(
+            os.getenv("VERCEL")
+            or os.getenv("VERCEL_ENV")
+            or os.getenv("AWS_LAMBDA_FUNCTION_NAME")
+            or os.getenv("LAMBDA_TASK_ROOT")
+        )
+        if is_serverless:
+            # On Vercel / Lambda (Linux), /tmp is the only writable directory.
             _raw_db_url = "sqlite:////tmp/app.db"
         else:
-            _default_db_dir = os.path.join(BASE_DIR, "instance")
-            os.makedirs(_default_db_dir, exist_ok=True)
-            _raw_db_url = "sqlite:///" + os.path.join(_default_db_dir, "app.db")
+            try:
+                _default_db_dir = os.path.join(BASE_DIR, "instance")
+                os.makedirs(_default_db_dir, exist_ok=True)
+                _raw_db_url = "sqlite:///" + os.path.join(_default_db_dir, "app.db")
+            except OSError:
+                _raw_db_url = "sqlite:////tmp/app.db"
 
     SQLALCHEMY_DATABASE_URI = _raw_db_url
     SQLALCHEMY_TRACK_MODIFICATIONS = False
@@ -56,7 +64,14 @@ class Config:
     # assets on ephemeral hosting, prefer remote (http) media instead.
     MEDIA_ROOT = os.getenv(
         "MEDIA_ROOT",
-        "/tmp/media" if os.getenv("VERCEL") else os.path.join(BASE_DIR, "app", "static", "uploads", "media"),
+        "/tmp/media"
+        if (
+            os.getenv("VERCEL")
+            or os.getenv("VERCEL_ENV")
+            or os.getenv("AWS_LAMBDA_FUNCTION_NAME")
+            or os.getenv("LAMBDA_TASK_ROOT")
+        )
+        else os.path.join(BASE_DIR, "app", "static", "uploads", "media"),
     )
 
     # Session cookie hardening. Cookie is never sent over plain HTTP

@@ -141,62 +141,78 @@ def validate_contact(form):
 
 @public_bp.route("/")
 def index():
-    featured = (
-        Project.query.filter_by(is_featured=True)
-        .order_by(*PROJECT_ORDER)
-        .all()
-    )
-
-    experiments = (
-        Project.query.join(
-            ProjectCategory,
-            Project.category_id == ProjectCategory.id,
+    try:
+        featured = (
+            Project.query.filter_by(is_featured=True)
+            .order_by(*PROJECT_ORDER)
+            .all()
         )
-        .filter(ProjectCategory.slug == "r-and-d")
-        .order_by(*PROJECT_ORDER)
-        .all()
-    )
+    except Exception:
+        featured = []
 
-    # First-row selected work, pinned to stable seed slugs in build order.
-    selected_work = (
-        Project.query.filter(
-            Project.slug.in_(
-                ["estora", "umama-motors", "business-systems"]
+    try:
+        experiments = (
+            Project.query.join(
+                ProjectCategory,
+                Project.category_id == ProjectCategory.id,
             )
+            .filter(ProjectCategory.slug == "r-and-d")
+            .order_by(*PROJECT_ORDER)
+            .all()
         )
-        .order_by(*PROJECT_ORDER)
-        .all()
-    )
+    except Exception:
+        experiments = []
 
-    learning_items = (
-        LearningItem.query.order_by(
-            LearningItem.display_order,
-            LearningItem.created_at.desc(),
+    try:
+        selected_work = (
+            Project.query.filter(
+                Project.slug.in_(
+                    ["estora", "umama-motors", "business-systems"]
+                )
+            )
+            .order_by(*PROJECT_ORDER)
+            .all()
         )
-        .limit(4)
-        .all()
-    )
+    except Exception:
+        selected_work = []
 
-    experiences = (
-        Experience.query.order_by(
-            Experience.display_order,
-            Experience.created_at.desc(),
+    try:
+        learning_items = (
+            LearningItem.query.order_by(
+                LearningItem.display_order,
+                LearningItem.created_at.desc(),
+            )
+            .limit(4)
+            .all()
         )
-        .limit(2)
-        .all()
-    )
+    except Exception:
+        learning_items = []
 
-    # Self-introduction media: exactly one PUBLISHED INTRO item at most.
-    from app.services.media_vault import provider_embed_url, published_intro
+    try:
+        experiences = (
+            Experience.query.order_by(
+                Experience.display_order,
+                Experience.created_at.desc(),
+            )
+            .limit(2)
+            .all()
+        )
+    except Exception:
+        experiences = []
 
-    intro_media = published_intro()
-
-    intro_embed = (
-        provider_embed_url(intro_media.location)
-        if intro_media is not None
-        and intro_media.storage == "EXTERNAL"
-        else None
-    )
+    intro_media = None
+    intro_embed = None
+    try:
+        from app.services.media_vault import provider_embed_url, published_intro
+        intro_media = published_intro()
+        intro_embed = (
+            provider_embed_url(intro_media.location)
+            if intro_media is not None
+            and intro_media.storage == "EXTERNAL"
+            else None
+        )
+    except Exception:
+        pass
 
     return render_template(
         "public/index.html",
@@ -212,11 +228,14 @@ def index():
 
 @public_bp.route("/work")
 def work():
-    all_categories = (
-        ProjectCategory.query
-        .order_by(ProjectCategory.name)
-        .all()
-    )
+    try:
+        all_categories = (
+            ProjectCategory.query
+            .order_by(ProjectCategory.name)
+            .all()
+        )
+    except Exception:
+        all_categories = []
 
     built = next(
         (c for c in all_categories if c.slug == "built"),
@@ -233,12 +252,15 @@ def work():
         if c.slug not in ("built", "r-and-d")
     ]
 
-    uncategorized = (
-        Project.query
-        .filter_by(category_id=None)
-        .order_by(*PROJECT_ORDER)
-        .all()
-    )
+    try:
+        uncategorized = (
+            Project.query
+            .filter_by(category_id=None)
+            .order_by(*PROJECT_ORDER)
+            .all()
+        )
+    except Exception:
+        uncategorized = []
 
     return render_template(
         "public/work.html",
@@ -267,12 +289,15 @@ def rnd():
         .first_or_404()
     )
 
-    projects = (
-        Project.query
-        .filter_by(category_id=category.id)
-        .order_by(*PROJECT_ORDER)
-        .all()
-    )
+    try:
+        projects = (
+            Project.query
+            .filter_by(category_id=category.id)
+            .order_by(*PROJECT_ORDER)
+            .all()
+        )
+    except Exception:
+        projects = []
 
     return render_template(
         "public/rnd.html",
@@ -283,14 +308,17 @@ def rnd():
 
 @public_bp.route("/context")
 def context():
-    experiences = (
-        Experience.query
-        .order_by(
-            Experience.display_order,
-            Experience.created_at.desc(),
+    try:
+        experiences = (
+            Experience.query
+            .order_by(
+                Experience.display_order,
+                Experience.created_at.desc(),
+            )
+            .all()
         )
-        .all()
-    )
+    except Exception:
+        experiences = []
 
     return render_template(
         "public/context.html",
@@ -300,14 +328,17 @@ def context():
 
 @public_bp.route("/learning")
 def learning():
-    items = (
-        LearningItem.query
-        .order_by(
-            LearningItem.display_order,
-            LearningItem.created_at.desc(),
+    try:
+        items = (
+            LearningItem.query
+            .order_by(
+                LearningItem.display_order,
+                LearningItem.created_at.desc(),
+            )
+            .all()
         )
-        .all()
-    )
+    except Exception:
+        items = []
 
     return render_template(
         "public/learning.html",

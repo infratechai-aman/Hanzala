@@ -112,6 +112,25 @@ class ProjectMedia(db.Model):
 
     project = db.relationship("Project", back_populates="media")
 
+    @property
+    def normalized_type(self):
+        return (self.media_type or "").strip().lower()
+
+    @property
+    def browser_url(self):
+        if not self.file_path:
+            return None
+        loc = self.file_path.strip()
+        if loc.startswith("http://") or loc.startswith("https://"):
+            return loc
+        from app.services.media_vault import local_file_exists
+        clean = loc.replace("\\", "/").lstrip("/")
+        if clean.startswith("static/"):
+            clean = clean[len("static/"):]
+        if local_file_exists(clean):
+            return f"/static/{clean}"
+        return None
+
 
 class ProjectLink(db.Model):
     __tablename__ = "project_links"
