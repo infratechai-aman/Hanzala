@@ -50,6 +50,21 @@ def media(location):
     return send_file(path, conditional=True)
 
 
+@public_bp.route("/favicon.ico")
+def favicon():
+    """Serve favicon safely."""
+    import os
+    from flask import current_app, send_from_directory, Response
+    try:
+        return send_from_directory(
+            os.path.join(current_app.root_path, "static", "images"),
+            "hanzala-avatar.png",
+            mimetype="image/png",
+        )
+    except Exception:
+        return Response(status=204)
+
+
 @public_bp.app_context_processor
 def inject_elsewhere():
     """Verified external proof links (DB-driven, never fabricated).
@@ -57,14 +72,17 @@ def inject_elsewhere():
     Available in all public templates for the footer and identity areas.
     Renders nothing when no such links exist.
     """
-    links = (
-        ProjectLink.query.filter(
-            ProjectLink.link_type.in_(["demo", "code"])
+    try:
+        links = (
+            ProjectLink.query.filter(
+                ProjectLink.link_type.in_(["demo", "code"])
+            )
+            .order_by(ProjectLink.display_order)
+            .all()
         )
-        .order_by(ProjectLink.display_order)
-        .all()
-    )
-    return {"elsewhere_links": links}
+        return {"elsewhere_links": links}
+    except Exception:
+        return {"elsewhere_links": []}
 
 
 PROJECT_ORDER = (Project.display_order, Project.created_at.desc())

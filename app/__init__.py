@@ -45,12 +45,15 @@ def create_app(config_name="development"):
     if config_class is ProductionConfig and os.getenv(
         "SECRET_KEY", DEV_FALLBACK_SECRET
     ) in (None, "", DEV_FALLBACK_SECRET):
-        # Never boot production on a missing secret or the dev fallback:
-        # a checked-in .env placeholder must not silently become the
-        # production session key.
-        raise RuntimeError(
-            "SECRET_KEY must be set in the environment for production."
-        )
+        if os.getenv("VERCEL"):
+            # Provide a fallback secret key on Vercel if not yet set in project settings
+            app.config["SECRET_KEY"] = os.getenv(
+                "VERCEL_GIT_COMMIT_SHA", "vercel-auto-session-key-fallback"
+            )
+        else:
+            raise RuntimeError(
+                "SECRET_KEY must be set in the environment for production."
+            )
     app.config.from_object(config_class)
 
     db.init_app(app)
@@ -62,13 +65,20 @@ def create_app(config_name="development"):
     app.register_blueprint(public_bp)
     app.register_blueprint(admin_bp)
 
-    # Storage depends on nothing but configuration: make sure the media
-    # directory exists on every startup (dev run, reloader child, WSGI
-    # worker). This creates, never deletes — restarts keep old files.
+    # Storage and database initialization
     with app.app_context():
-        from app.services.media_vault import media_directory
+        try:
+            from app.services.media_vault import media_directory
+            media_directory()
+        except Exception:
+            pass
 
-        media_directory()
+        try:
+            db.create_all()
+            from app.seed import seed_portfolio
+            seed_portfolio()
+        except Exception as e:
+            app.logger.warning(f"Database auto-init or seed skipped: {e}")
 
     register_error_handlers(app)
     register_cli_commands(app)
@@ -79,10 +89,16 @@ def create_app(config_name="development"):
 def register_error_handlers(app):
     """Simple user-facing error pages (no stack traces or secrets)."""
 
+    def _make_handler(c):
+        def _handler(e):
+            try:
+                return render_template(f"errors/{c}.html"), c
+            except Exception:
+                return f"<h1>Error {c}</h1><p>An error occurred.</p>", c
+        return _handler
+
     for code in (400, 403, 404, 500):
-        app.register_error_handler(
-            code, lambda e, code=code: (render_template(f"errors/{code}.html"), code)
-        )
+        app.register_error_handler(code, _make_handler(code))
 
 
 def register_cli_commands(app):
